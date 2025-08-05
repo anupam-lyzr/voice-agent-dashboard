@@ -47,8 +47,8 @@ import {
   User,
   Play,
   Loader2,
-  CheckCircle,
-  XCircle,
+  // CheckCircle,
+  // XCircle,
   Clock,
   RefreshCw,
   Rocket,
@@ -56,15 +56,15 @@ import {
   Eye,
   Trash2,
   PhoneCall,
-  Calendar,
-  MessageSquare,
+  // Calendar,
+  // MessageSquare,
   Activity,
   TrendingUp,
   AlertTriangle,
   Settings,
-  FileText,
+  // FileText,
   Timer,
-  Volume2,
+  // Volume2,
   Mic,
   Speaker,
   Database,
@@ -224,6 +224,7 @@ export default function Testing() {
   const [currentCall, setCurrentCall] = useState<ActiveCall | null>(null);
   const [activeTab, setActiveTab] = useState("overview");
 
+  console.log(currentCall);
   // Data Fetching
   const loadData = async (
     type?:
