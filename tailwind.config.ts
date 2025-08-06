@@ -2,7 +2,7 @@ import { type Config } from "tailwindcss";
 import plugin from "tailwindcss/plugin";
 
 export default {
-  // We've removed `darkMode: "class"` to prevent dark mode altogether
+  darkMode: "class",
   content: ["./src/**/*.{ts,tsx}"],
   theme: {
     variables: {
@@ -28,7 +28,27 @@ export default {
         ring: "240 5.9% 10%",
         radius: "0.5rem",
       },
-      // The "dark" theme object has been removed
+      dark: {
+        background: "240 10% 3.9%",
+        foreground: "0 0% 98%",
+        card: "240 10% 3.9%",
+        "card-foreground": "0 0% 98%",
+        popover: "240 10% 3.9%",
+        "popover-foreground": "0 0% 98%",
+        primary: "0 0% 98%",
+        "primary-foreground": "240 5.9% 10%",
+        secondary: "240 3.7% 15.9%",
+        "secondary-foreground": "0 0% 98%",
+        muted: "240 3.7% 15.9%",
+        "muted-foreground": "240 5% 64.9%",
+        accent: "240 3.7% 15.9%",
+        "accent-foreground": "0 0% 98%",
+        destructive: "0 62.8% 30.6%",
+        "destructive-foreground": "0 0% 98%",
+        border: "240 3.7% 15.9%",
+        input: "240 3.7% 15.9%",
+        ring: "240 4.9% 83.9%",
+      },
     },
     extend: {
       colors: {
@@ -75,6 +95,16 @@ export default {
   },
   plugins: [
     plugin(function ({ addBase }) {
+      addBase({
+        ":root": {
+          "@apply [--background:240_10%_3.9%] [--foreground:0_0%_98%] [--card:240_10%_3.9%] [--card-foreground:0_0%_98%] [--popover:240_10%_3.9%] [--popover-foreground:0_0%_98%] [--primary:0_0%_98%] [--primary-foreground:240_5.9%_10%] [--secondary:240_3.7%_15.9%] [--secondary-foreground:0_0%_98%] [--muted:240_3.7%_15.9%] [--muted-foreground:240_5%_64.9%] [--accent:240_3.7%_15.9%] [--accent-foreground:0_0%_98%] [--destructive:0_62.8%_30.6%] [--destructive-foreground:0_0%_98%] [--border:240_3.7%_15.9%] [--input:240_3.7%_15.9%] [--ring:240_4.9%_83.9%] [--radius:0.5rem]":
+            {},
+        },
+        ".dark": {
+          "@apply [--background:240_10%_3.9%] [--foreground:0_0%_98%] [--card:240_10%_3.9%] [--card-foreground:0_0%_98%] [--popover:240_10%_3.9%] [--popover-foreground:0_0%_98%] [--primary:0_0%_98%] [--primary-foreground:240_5.9%_10%] [--secondary:240_3.7%_15.9%] [--secondary-foreground:0_0%_98%] [--muted:240_3.7%_15.9%] [--muted-foreground:240_5%_64.9%] [--accent:240_3.7%_15.9%] [--accent-foreground:0_0%_98%] [--destructive:0_62.8%_30.6%] [--destructive-foreground:0_0%_98%] [--border:240_3.7%_15.9%] [--input:240_3.7%_15.9%] [--ring:240_4.9%_83.9%]":
+            {},
+        },
+      });
       addBase({
         "*": {
           "@apply border-border": {},
