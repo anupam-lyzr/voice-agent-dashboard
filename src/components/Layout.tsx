@@ -5,10 +5,10 @@ import { Button } from "./ui/button";
 import { ScrollArea } from "./ui/scroll-area";
 import {
   LayoutDashboard,
-  Phone,
-  Users,
-  BarChart3,
-  Settings,
+  // Phone,
+  // Users,
+  // BarChart3,
+  // Settings,
   TestTube,
   Menu,
   X,
@@ -23,10 +23,10 @@ interface LayoutProps {
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "Testing", href: "/testing", icon: TestTube },
-  { name: "Campaign", href: "/campaign", icon: Phone },
-  { name: "Clients", href: "/clients", icon: Users },
-  { name: "Analytics", href: "/analytics", icon: BarChart3 },
-  { name: "Settings", href: "/settings", icon: Settings },
+  // { name: "Campaign", href: "/campaign", icon: Phone },
+  // { name: "Clients", href: "/clients", icon: Users },
+  // { name: "Analytics", href: "/analytics", icon: BarChart3 },
+  // { name: "Settings", href: "/settings", icon: Settings },
 ];
 
 export default function Layout({ children }: LayoutProps) {
