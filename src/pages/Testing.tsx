@@ -139,7 +139,11 @@ interface SystemHealth {
   timestamp: string;
   components: {
     voice_processor: { configured: boolean; status: string };
-    hybrid_tts: { configured: boolean; status: string; stats?: any };
+    hybrid_tts: {
+      configured: boolean;
+      status: string;
+      stats?: Record<string, unknown>;
+    };
     lyzr: {
       configured: boolean;
       status: string;
@@ -163,7 +167,7 @@ interface SystemHealth {
     redis: { connected: boolean; status: string };
     twilio: { configured: boolean; status: string; phone_number?: string };
   };
-  metrics?: any;
+  metrics?: Record<string, unknown>;
   alerts?: Array<{
     level: string;
     service: string;
@@ -251,7 +255,7 @@ export default function Testing() {
         );
         const logsData = await logsRes.json();
         const testCallLogs = (logsData.logs || []).filter(
-          (log: any) => log.is_test_call
+          (log: Record<string, unknown>) => log.is_test_call
         );
         setCallLogs(testCallLogs);
       }
@@ -318,13 +322,20 @@ export default function Testing() {
 
   useEffect(() => {
     loadData();
+    // Reduced polling frequency and made it conditional
     const interval = setInterval(() => {
-      loadData("call-logs");
-      loadData("active-calls");
-      loadData("health");
-    }, 10000);
+      // Only poll if there are active calls or if we're on the testing page
+      if (activeCalls.length > 0) {
+        loadData("call-logs");
+        loadData("active-calls");
+        loadData("health");
+      } else {
+        // Less frequent polling when no active calls
+        loadData("call-logs");
+      }
+    }, 60000); // Changed from 10000 to 60000 (1 minute)
     return () => clearInterval(interval);
-  }, []);
+  }, [activeCalls.length]); // Added dependency to re-create interval when active calls change
 
   const handleCreateClient = async () => {
     setIsCreatingClient(true);
@@ -350,7 +361,7 @@ export default function Testing() {
           description: result.detail || "Failed to create client.",
         });
       }
-    } catch (error) {
+    } catch {
       toast.error("An unexpected error occurred.");
     }
     setIsCreatingClient(false);
@@ -379,7 +390,7 @@ export default function Testing() {
           description: result.detail || "Failed to create agent.",
         });
       }
-    } catch (error) {
+    } catch {
       toast.error("An unexpected error occurred.");
     }
     setIsCreatingAgent(false);
@@ -426,7 +437,7 @@ export default function Testing() {
           description: result.detail || "Failed to start test call.",
         });
       }
-    } catch (error) {
+    } catch {
       toast.error("An unexpected error occurred.");
     }
     setIsCallInProgress(false);
@@ -451,7 +462,12 @@ export default function Testing() {
                 : call
             )
           );
-          if (statusData.status === "completed") {
+          // Stop polling when call is completed or failed
+          if (
+            ["completed", "failed", "busy", "no_answer"].includes(
+              statusData.status
+            )
+          ) {
             clearInterval(pollInterval);
             loadData("call-logs");
             loadData("clients");
@@ -463,7 +479,8 @@ export default function Testing() {
       } catch (error) {
         console.error("Failed to poll call status:", error);
       }
-    }, 3000);
+    }, 5000); // Changed from 3000 to 5000 (5 seconds)
+    // Stop polling after 5 minutes instead of 5 minutes
     setTimeout(() => clearInterval(pollInterval), 300000);
   };
 
@@ -481,7 +498,7 @@ export default function Testing() {
       } else {
         toast.error("Failed to delete client");
       }
-    } catch (error) {
+    } catch {
       toast.error("Error deleting client");
     }
   };
@@ -497,7 +514,7 @@ export default function Testing() {
       } else {
         toast.error("Failed to load call summary");
       }
-    } catch (error) {
+    } catch {
       toast.error("Error loading call summary");
     }
   };
@@ -512,8 +529,9 @@ export default function Testing() {
       failed: { variant: "destructive" as const, color: "text-red-600" },
       busy: { variant: "secondary" as const, color: "text-orange-600" },
       no_answer: { variant: "outline" as const, color: "text-gray-600" },
+      unknown: { variant: "outline" as const, color: "text-gray-600" },
     };
-    return statusMap[status as keyof typeof statusMap] || statusMap.completed;
+    return statusMap[status as keyof typeof statusMap] || statusMap.unknown;
   };
 
   const getOutcomeBadge = (outcome: string) => {
@@ -539,14 +557,27 @@ export default function Testing() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">
-          Voice Agent Testing & Monitoring
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          Complete testing environment with real call capabilities, live
-          monitoring, and production-like data visualization.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Voice Agent Testing & Monitoring
+          </h1>
+          <p className="text-muted-foreground mt-1">
+            Complete testing environment with real call capabilities, live
+            monitoring, and production-like data visualization.
+          </p>
+        </div>
+        <Button
+          onClick={() => loadData()}
+          disabled={isLoadingData}
+          size="sm"
+          variant="outline"
+        >
+          <RefreshCw
+            className={`h-4 w-4 ${isLoadingData ? "animate-spin" : ""}`}
+          />
+          <span className="ml-2">Refresh Data</span>
+        </Button>
       </div>
 
       {systemHealth &&
@@ -600,11 +631,12 @@ export default function Testing() {
                       <Phone className="h-4 w-4 text-green-600" />
                       <span className="font-medium">{call.client_name}</span>
                     </div>
-                    <Badge {...getStatusBadge(call.status)}>
-                      {call.status.replace("_", " ")}
+                    <Badge {...getStatusBadge(call.status || "unknown")}>
+                      {(call.status || "unknown").replace("_", " ")}
                     </Badge>
                     <span className="text-sm text-muted-foreground">
-                      Stage: {call.current_stage.replace("_", " ")}
+                      Stage:{" "}
+                      {(call.current_stage || "unknown").replace("_", " ")}
                     </span>
                     <span className="text-sm text-muted-foreground">
                       Turns: {call.conversation_turns}
@@ -631,8 +663,7 @@ export default function Testing() {
           <TabsTrigger value="create">Create Data</TabsTrigger>
           <TabsTrigger value="test-calls">Test Calls</TabsTrigger>
           <TabsTrigger value="call-logs">Call Logs</TabsTrigger>
-          {/* <TabsTrigger value="monitoring">Live Monitor</TabsTrigger> */}
-          {/* <TabsTrigger value="health">System Health</TabsTrigger> */}
+          <TabsTrigger value="health">System Health</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
@@ -735,7 +766,10 @@ export default function Testing() {
                 </Button>
                 <Button
                   variant="outline"
-                  onClick={() => setActiveTab("health")}
+                  onClick={() => {
+                    setActiveTab("health");
+                    loadData("health");
+                  }}
                 >
                   <Activity className="h-4 w-4 mr-2" />
                   Check System Health
@@ -1272,9 +1306,12 @@ export default function Testing() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle>Test Call Logs & History</CardTitle>
+                  <CardTitle>
+                    Test Call Logs & History ({callLogs.length})
+                  </CardTitle>
                   <CardDescription>
-                    Complete call records with summaries and performance metrics
+                    Complete test call records with summaries and performance
+                    metrics
                   </CardDescription>
                 </div>
                 <Button
@@ -1493,16 +1530,30 @@ export default function Testing() {
             </CardContent>
           </Card>
         </TabsContent>
-        {/* <TabsContent value="health" className="space-y-6">
+        <TabsContent value="health" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="h-5 w-5" />
-                System Health & Status
-              </CardTitle>
-              <CardDescription>
-                Real-time monitoring of all voice agent components
-              </CardDescription>
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="flex items-center gap-2">
+                    <Activity className="h-5 w-5" />
+                    System Health & Status
+                  </CardTitle>
+                  <CardDescription>
+                    Real-time monitoring of all voice agent components
+                  </CardDescription>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => loadData("health")}
+                  disabled={isLoadingData}
+                >
+                  <RefreshCw
+                    className={`h-4 w-4 ${isLoadingData ? "animate-spin" : ""}`}
+                  />
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
               {systemHealth ? (
@@ -1544,11 +1595,12 @@ export default function Testing() {
                               >
                                 {component.status}
                               </Badge>
-                              {component.test_latency_ms && (
-                                <span className="text-xs text-muted-foreground">
-                                  {component.test_latency_ms.toFixed(0)}ms
-                                </span>
-                              )}
+                              {"test_latency_ms" in component &&
+                                component.test_latency_ms && (
+                                  <span className="text-xs text-muted-foreground">
+                                    {component.test_latency_ms.toFixed(0)}ms
+                                  </span>
+                                )}
                             </div>
                           </CardContent>
                         </Card>
@@ -1580,6 +1632,43 @@ export default function Testing() {
                       </CardContent>
                     </Card>
                   )}
+
+                  {systemHealth.campaign && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Campaign Statistics</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div className="p-4 border rounded-lg">
+                            <div className="text-2xl font-bold">
+                              {systemHealth.campaign.total_clients}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              Total Clients
+                            </div>
+                          </div>
+                          <div className="p-4 border rounded-lg">
+                            <div className="text-2xl font-bold">
+                              {systemHealth.campaign.completed_calls}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              Completed Calls
+                            </div>
+                          </div>
+                          <div className="p-4 border rounded-lg">
+                            <div className="text-2xl font-bold">
+                              {systemHealth.campaign.completion_rate.toFixed(1)}
+                              %
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                              Completion Rate
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
                 </div>
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
@@ -1589,7 +1678,7 @@ export default function Testing() {
               )}
             </CardContent>
           </Card>
-        </TabsContent> */}
+        </TabsContent>
       </Tabs>
     </div>
   );

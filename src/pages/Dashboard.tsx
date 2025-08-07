@@ -103,10 +103,30 @@ export default function Dashboard() {
     }
   };
 
+  const refreshSystemHealth = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/system-health/refresh`, {
+        method: "POST",
+      });
+      if (response.ok) {
+        const healthData = await response.json();
+        setHealth(healthData);
+        setLastRefresh(new Date());
+        toast.success("System health refreshed");
+      } else {
+        toast.error("Failed to refresh system health");
+      }
+    } catch (error) {
+      console.error("Failed to refresh system health:", error);
+      toast.error("Failed to refresh system health");
+    }
+  };
+
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 30000);
-    return () => clearInterval(interval);
+    // Removed automatic polling - now only manual refresh
+    // const interval = setInterval(fetchData, 30000);
+    // return () => clearInterval(interval);
   }, []);
 
   const getStatusBadge = (status: string) => {
@@ -176,9 +196,22 @@ export default function Dashboard() {
       {health && (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center">
-              <Server className="h-5 w-5 mr-2" />
-              System Health
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center">
+                <Server className="h-5 w-5 mr-2" />
+                System Health
+              </div>
+              <Button
+                onClick={refreshSystemHealth}
+                disabled={isLoading}
+                size="sm"
+                variant="outline"
+              >
+                <RefreshCw
+                  className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
+                />
+                <span className="ml-2">Refresh Health</span>
+              </Button>
             </CardTitle>
           </CardHeader>
           <CardContent>
