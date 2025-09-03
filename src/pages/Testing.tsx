@@ -88,6 +88,7 @@ interface TestAgent {
   id: string;
   name: string;
   email: string;
+  phone?: string;
   timezone: string;
   specialties: string[];
   working_hours: string;
@@ -208,6 +209,7 @@ export default function Testing() {
   const [newAgent, setNewAgent] = useState({
     name: "",
     email: "",
+    phone: "",
     google_calendar_id: "",
     timezone: "America/New_York",
   });
@@ -394,6 +396,7 @@ export default function Testing() {
         setNewAgent({
           name: "",
           email: "",
+          phone: "",
           google_calendar_id: "",
           timezone: "America/New_York",
         });
@@ -579,7 +582,7 @@ export default function Testing() {
               error: result.detail || "Failed to start call",
             });
           }
-        } catch (error) {
+        } catch {
           results.push({
             client_id: clientId,
             success: false,
@@ -605,7 +608,7 @@ export default function Testing() {
       // Clear selections after batch call
       setSelectedClients([]);
       setSelectedAgent("");
-    } catch (error) {
+    } catch {
       toast.error("Batch test calls failed");
     } finally {
       setIsBatchCallInProgress(false);
@@ -1035,6 +1038,18 @@ export default function Testing() {
                 </FormRow>
                 <FormRow>
                   <div className="space-y-1.5">
+                    <Label htmlFor="agentPhone">Phone (optional)</Label>
+                    <Input
+                      id="agentPhone"
+                      type="tel"
+                      value={newAgent.phone}
+                      onChange={(e) =>
+                        setNewAgent({ ...newAgent, phone: e.target.value })
+                      }
+                      placeholder="+1234567890"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
                     <Label htmlFor="googleCalendar">Google Calendar ID</Label>
                     <Input
                       id="googleCalendar"
@@ -1048,6 +1063,8 @@ export default function Testing() {
                       placeholder="jane@company.com"
                     />
                   </div>
+                </FormRow>
+                <FormRow>
                   <div className="space-y-1.5">
                     <Label htmlFor="timezone">Timezone</Label>
                     <Select
@@ -1178,6 +1195,7 @@ export default function Testing() {
                       <TableRow>
                         <TableHead>Name</TableHead>
                         <TableHead>Email</TableHead>
+                        <TableHead>Phone</TableHead>
                         <TableHead>Timezone</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -1189,6 +1207,9 @@ export default function Testing() {
                           </TableCell>
                           <TableCell className="text-sm">
                             {agent.email}
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            {agent.phone || "Not provided"}
                           </TableCell>
                           <TableCell className="text-sm">
                             {agent.timezone}
