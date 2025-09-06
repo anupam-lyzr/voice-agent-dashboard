@@ -224,6 +224,7 @@ export default function Testing() {
   const [activeCalls, setActiveCalls] = useState<ActiveCall[]>([]);
   const [selectedClients, setSelectedClients] = useState<string[]>([]);
   const [selectedAgent, setSelectedAgent] = useState("");
+  const [selectedVoiceProfile, setSelectedVoiceProfile] = useState("chad_alex"); // Phase 1: Voice selection
   const [systemHealth, setSystemHealth] = useState<SystemHealth | null>(null);
   const [testStats, setTestStats] = useState<TestStats | null>(null);
   const [selectedCallSummary, setSelectedCallSummary] =
@@ -547,6 +548,7 @@ export default function Testing() {
             body: JSON.stringify({
               client_id: clientId,
               agent_id: selectedAgent,
+              voice_profile: selectedVoiceProfile, // Phase 1: Include voice profile
               call_type: "test",
             }),
           });
@@ -1310,6 +1312,43 @@ export default function Testing() {
                     >
                       <RefreshCw className="h-4 w-4" />
                     </Button>
+                  </div>
+                </div>
+              </FormRow>
+
+              <FormRow>
+                <div className="space-y-1.5">
+                  <Label>Voice Profile</Label>
+                  <Select
+                    value={selectedVoiceProfile}
+                    onValueChange={setSelectedVoiceProfile}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select voice profile" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="chad_alex">Chad (Alex) - Male</SelectItem>
+                      <SelectItem value="mark_alex">Mark (Alex) - Male</SelectItem>
+                      <SelectItem value="juniper_kara">Juniper (Kara) - Female</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground">
+                    Phase 1: Different voices, all say "Alex"
+                  </p>
+                </div>
+                <div className="space-y-1.5">
+                  <Label className="text-muted-foreground">Selected Voice Info</Label>
+                  <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-md">
+                    <div className="text-sm">
+                      <div className="font-medium">
+                        {selectedVoiceProfile === "chad_alex" && "Chad (Alex) - Deep Male Voice"}
+                        {selectedVoiceProfile === "mark_alex" && "Mark (Alex) - Warm Male Voice"}  
+                        {selectedVoiceProfile === "juniper_kara" && "Juniper (Kara) - Female Voice"}
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-1">
+                        Character will say "Alex" in all voice profiles (Phase 1)
+                      </div>
+                    </div>
                   </div>
                 </div>
               </FormRow>
