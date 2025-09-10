@@ -935,8 +935,13 @@ export default function Testing() {
                       onChange={(e) =>
                         setNewClient({ ...newClient, phone: e.target.value })
                       }
-                      placeholder="+1234567890"
+                      placeholder="+12481234567"
                     />
+                    <p className="text-xs text-muted-foreground">
+                      Please add country code with the phone number and don't
+                      use any special characters or spaces. Ex: +12481234567
+                      (USA), +919876543210 (India)
+                    </p>
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="email">Email (optional)</Label>
@@ -1327,26 +1332,31 @@ export default function Testing() {
                       <SelectValue placeholder="Select voice profile" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="chad_alex">Chad (Alex) - Male</SelectItem>
-                      <SelectItem value="mark_alex">Mark (Alex) - Male</SelectItem>
-                      <SelectItem value="juniper_kara">Juniper (Kara) - Female</SelectItem>
+                      <SelectItem value="chad_alex">
+                        Chad (Alex) - Male
+                      </SelectItem>
+                      {/* <SelectItem value="mark_alex">
+                        Mark (Alex) - Male
+                      </SelectItem> */}
+                      <SelectItem value="juniper_kara">
+                        Juniper (Kara) - Female
+                      </SelectItem>
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-muted-foreground">
-                    Phase 1: Different voices, all say "Alex"
-                  </p>
                 </div>
                 <div className="space-y-1.5">
-                  <Label className="text-muted-foreground">Selected Voice Info</Label>
+                  <Label className="text-muted-foreground">
+                    Selected Voice Info
+                  </Label>
                   <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-md">
                     <div className="text-sm">
                       <div className="font-medium">
-                        {selectedVoiceProfile === "chad_alex" && "Chad (Alex) - Deep Male Voice"}
-                        {selectedVoiceProfile === "mark_alex" && "Mark (Alex) - Warm Male Voice"}  
-                        {selectedVoiceProfile === "juniper_kara" && "Juniper (Kara) - Female Voice"}
-                      </div>
-                      <div className="text-xs text-muted-foreground mt-1">
-                        Character will say "Alex" in all voice profiles (Phase 1)
+                        {selectedVoiceProfile === "chad_alex" &&
+                          "Chad (Alex) - Deep Male Voice"}
+                        {/* {selectedVoiceProfile === "mark_alex" &&
+                          "Mark (Alex) - Warm Male Voice"} */}
+                        {selectedVoiceProfile === "juniper_kara" &&
+                          "Juniper (Kara) - Female Voice"}
                       </div>
                     </div>
                   </div>
