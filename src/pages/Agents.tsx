@@ -115,13 +115,17 @@ export default function Agents() {
     is_active: true,
   });
 
+  const API_ROOT =
+    (import.meta as unknown as { env?: { VITE_API_BASE_URL?: string } }).env
+      ?.VITE_API_BASE_URL || "http://localhost:8000";
+  const API_BASE_URL = `${API_ROOT}/api/dashboard`;
   useEffect(() => {
     loadAgents();
   }, []);
 
   const loadAgents = async () => {
     try {
-      const response = await fetch("/api/dashboard/agents");
+      const response = await fetch(`${API_BASE_URL}/api/dashboard/agents`);
       if (response.ok) {
         const data = await response.json();
         setAgents(data.agents || []);
@@ -154,8 +158,8 @@ export default function Agents() {
 
       const isEditing = editingAgent !== null;
       const url = isEditing
-        ? `/api/dashboard/agents/${editingAgent.id}`
-        : "/api/dashboard/agents";
+        ? `${API_BASE_URL}/api/dashboard/agents/${editingAgent.id}`
+        : `${API_BASE_URL}/api/dashboard/agents`;
 
       const method = isEditing ? "PUT" : "POST";
 
@@ -232,9 +236,12 @@ export default function Agents() {
     if (!confirm(`Are you sure you want to deactivate ${agent.name}?`)) return;
 
     try {
-      const response = await fetch(`/api/dashboard/agents/${agent.id}`, {
-        method: "DELETE",
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/api/dashboard/agents/${agent.id}`,
+        {
+          method: "DELETE",
+        }
+      );
 
       if (response.ok) {
         toast.success(`Agent ${agent.name} deactivated successfully!`);
