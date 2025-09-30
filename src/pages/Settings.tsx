@@ -3,12 +3,32 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { Save, RefreshCw, Settings as SettingsIcon, Phone, Mail, Clock, Users } from "lucide-react";
+import {
+  Save,
+  RefreshCw,
+  Settings as SettingsIcon,
+  Phone,
+  Mail,
+  Clock,
+  Users,
+} from "lucide-react";
 
 interface CampaignSettings {
   max_call_attempts: number;
@@ -46,7 +66,7 @@ const CALL_OUTCOMES = [
   "voicemail",
   "no_answer",
   "busy",
-  "failed"
+  "failed",
 ];
 
 export default function Settings() {
@@ -64,12 +84,20 @@ export default function Settings() {
     business_end_hour: 17,
     business_timezone: "America/New_York",
     voice_profile_name: "chad_alex",
-    campaign_end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    auto_extend_days: 30
+    campaign_end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .split("T")[0],
+    auto_extend_days: 30,
   });
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  // API base: prefer env var, fallback to localhost
+  const API_ROOT =
+    (import.meta as unknown as { env?: { VITE_API_BASE_URL?: string } }).env
+      ?.VITE_API_BASE_URL || "http://localhost:8000";
+  const API_BASE_URL = `${API_ROOT}/api/dashboard`;
 
   useEffect(() => {
     loadSettings();
@@ -77,7 +105,7 @@ export default function Settings() {
 
   const loadSettings = async () => {
     try {
-      const response = await fetch("/api/settings");
+      const response = await fetch(`${API_BASE_URL}/api/settings`);
       if (response.ok) {
         const data = await response.json();
         setSettings(data);
@@ -94,10 +122,10 @@ export default function Settings() {
   const saveSettings = async () => {
     setSaving(true);
     try {
-      const response = await fetch("/api/settings", {
+      const response = await fetch(`${API_BASE_URL}/api/settings`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(settings)
+        body: JSON.stringify(settings),
       });
 
       if (response.ok) {
@@ -113,16 +141,19 @@ export default function Settings() {
   };
 
   const updateArrayField = (field: keyof CampaignSettings, value: string) => {
-    const numbers = value.split(",").map(v => parseInt(v.trim())).filter(n => !isNaN(n));
-    setSettings(prev => ({ ...prev, [field]: numbers }));
+    const numbers = value
+      .split(",")
+      .map((v) => parseInt(v.trim()))
+      .filter((n) => !isNaN(n));
+    setSettings((prev) => ({ ...prev, [field]: numbers }));
   };
 
   const toggleOutcome = (outcome: string) => {
-    setSettings(prev => ({
+    setSettings((prev) => ({
       ...prev,
       stop_call_outcomes: prev.stop_call_outcomes.includes(outcome)
-        ? prev.stop_call_outcomes.filter(o => o !== outcome)
-        : [...prev.stop_call_outcomes, outcome]
+        ? prev.stop_call_outcomes.filter((o) => o !== outcome)
+        : [...prev.stop_call_outcomes, outcome],
     }));
   };
 
@@ -149,7 +180,11 @@ export default function Settings() {
             Configure voice agent campaign parameters and business rules
           </p>
         </div>
-        <Button onClick={saveSettings} disabled={saving} className="min-w-[120px]">
+        <Button
+          onClick={saveSettings}
+          disabled={saving}
+          className="min-w-[120px]"
+        >
           {saving ? (
             <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
           ) : (
@@ -181,7 +216,12 @@ export default function Settings() {
                   min="1"
                   max="10"
                   value={settings.max_call_attempts}
-                  onChange={(e) => setSettings(prev => ({ ...prev, max_call_attempts: parseInt(e.target.value) || 3 }))}
+                  onChange={(e) =>
+                    setSettings((prev) => ({
+                      ...prev,
+                      max_call_attempts: parseInt(e.target.value) || 3,
+                    }))
+                  }
                 />
               </div>
               <div>
@@ -192,7 +232,12 @@ export default function Settings() {
                   min="1"
                   max="14"
                   value={settings.call_interval_days}
-                  onChange={(e) => setSettings(prev => ({ ...prev, call_interval_days: parseInt(e.target.value) || 2 }))}
+                  onChange={(e) =>
+                    setSettings((prev) => ({
+                      ...prev,
+                      call_interval_days: parseInt(e.target.value) || 2,
+                    }))
+                  }
                 />
               </div>
             </div>
@@ -205,7 +250,12 @@ export default function Settings() {
                 min="1"
                 max="50"
                 value={settings.max_concurrent_calls}
-                onChange={(e) => setSettings(prev => ({ ...prev, max_concurrent_calls: parseInt(e.target.value) || 10 }))}
+                onChange={(e) =>
+                  setSettings((prev) => ({
+                    ...prev,
+                    max_concurrent_calls: parseInt(e.target.value) || 10,
+                  }))
+                }
               />
             </div>
 
@@ -213,9 +263,16 @@ export default function Settings() {
               <Switch
                 id="allow_weekend_outreach"
                 checked={settings.allow_weekend_outreach}
-                onCheckedChange={(checked) => setSettings(prev => ({ ...prev, allow_weekend_outreach: checked }))}
+                onCheckedChange={(checked) =>
+                  setSettings((prev) => ({
+                    ...prev,
+                    allow_weekend_outreach: checked,
+                  }))
+                }
               />
-              <Label htmlFor="allow_weekend_outreach">Allow Weekend Outreach</Label>
+              <Label htmlFor="allow_weekend_outreach">
+                Allow Weekend Outreach
+              </Label>
             </div>
 
             <div>
@@ -223,7 +280,12 @@ export default function Settings() {
               <Input
                 id="voice_profile_name"
                 value={settings.voice_profile_name}
-                onChange={(e) => setSettings(prev => ({ ...prev, voice_profile_name: e.target.value }))}
+                onChange={(e) =>
+                  setSettings((prev) => ({
+                    ...prev,
+                    voice_profile_name: e.target.value,
+                  }))
+                }
               />
             </div>
 
@@ -233,10 +295,14 @@ export default function Settings() {
                 Select outcomes that should stop further calling attempts
               </p>
               <div className="flex flex-wrap gap-2">
-                {CALL_OUTCOMES.map(outcome => (
+                {CALL_OUTCOMES.map((outcome) => (
                   <Badge
                     key={outcome}
-                    variant={settings.stop_call_outcomes.includes(outcome) ? "default" : "secondary"}
+                    variant={
+                      settings.stop_call_outcomes.includes(outcome)
+                        ? "default"
+                        : "secondary"
+                    }
                     className="cursor-pointer"
                     onClick={() => toggleOutcome(outcome)}
                   >
@@ -262,36 +328,59 @@ export default function Settings() {
           <CardContent className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="max_medicare_email_attempts">Medicare Email Attempts</Label>
+                <Label htmlFor="max_medicare_email_attempts">
+                  Medicare Email Attempts
+                </Label>
                 <Input
                   id="max_medicare_email_attempts"
                   type="number"
                   min="1"
                   max="10"
                   value={settings.max_medicare_email_attempts}
-                  onChange={(e) => setSettings(prev => ({ ...prev, max_medicare_email_attempts: parseInt(e.target.value) || 3 }))}
+                  onChange={(e) =>
+                    setSettings((prev) => ({
+                      ...prev,
+                      max_medicare_email_attempts:
+                        parseInt(e.target.value) || 3,
+                    }))
+                  }
                 />
               </div>
               <div>
-                <Label htmlFor="max_nonmedicare_email_attempts">Non-Medicare Email Attempts</Label>
+                <Label htmlFor="max_nonmedicare_email_attempts">
+                  Non-Medicare Email Attempts
+                </Label>
                 <Input
                   id="max_nonmedicare_email_attempts"
                   type="number"
                   min="1"
                   max="10"
                   value={settings.max_nonmedicare_email_attempts}
-                  onChange={(e) => setSettings(prev => ({ ...prev, max_nonmedicare_email_attempts: parseInt(e.target.value) || 3 }))}
+                  onChange={(e) =>
+                    setSettings((prev) => ({
+                      ...prev,
+                      max_nonmedicare_email_attempts:
+                        parseInt(e.target.value) || 3,
+                    }))
+                  }
                 />
               </div>
             </div>
 
             <div>
-              <Label htmlFor="medicare_cadence">Medicare Email Cadence (Days)</Label>
+              <Label htmlFor="medicare_cadence">
+                Medicare Email Cadence (Days)
+              </Label>
               <Input
                 id="medicare_cadence"
                 placeholder="0, 3, 7"
                 value={settings.medicare_email_cadence_days.join(", ")}
-                onChange={(e) => updateArrayField("medicare_email_cadence_days", e.target.value)}
+                onChange={(e) =>
+                  updateArrayField(
+                    "medicare_email_cadence_days",
+                    e.target.value
+                  )
+                }
               />
               <p className="text-xs text-gray-500 mt-1">
                 Comma-separated days after initial contact
@@ -299,12 +388,19 @@ export default function Settings() {
             </div>
 
             <div>
-              <Label htmlFor="nonmedicare_cadence">Non-Medicare Email Cadence (Days)</Label>
+              <Label htmlFor="nonmedicare_cadence">
+                Non-Medicare Email Cadence (Days)
+              </Label>
               <Input
                 id="nonmedicare_cadence"
                 placeholder="0, 3, 7"
                 value={settings.nonmedicare_email_cadence_days.join(", ")}
-                onChange={(e) => updateArrayField("nonmedicare_email_cadence_days", e.target.value)}
+                onChange={(e) =>
+                  updateArrayField(
+                    "nonmedicare_email_cadence_days",
+                    e.target.value
+                  )
+                }
               />
               <p className="text-xs text-gray-500 mt-1">
                 Comma-separated days after initial contact
@@ -334,7 +430,12 @@ export default function Settings() {
                   min="0"
                   max="23"
                   value={settings.business_start_hour}
-                  onChange={(e) => setSettings(prev => ({ ...prev, business_start_hour: parseInt(e.target.value) || 9 }))}
+                  onChange={(e) =>
+                    setSettings((prev) => ({
+                      ...prev,
+                      business_start_hour: parseInt(e.target.value) || 9,
+                    }))
+                  }
                 />
               </div>
               <div>
@@ -345,20 +446,30 @@ export default function Settings() {
                   min="0"
                   max="23"
                   value={settings.business_end_hour}
-                  onChange={(e) => setSettings(prev => ({ ...prev, business_end_hour: parseInt(e.target.value) || 17 }))}
+                  onChange={(e) =>
+                    setSettings((prev) => ({
+                      ...prev,
+                      business_end_hour: parseInt(e.target.value) || 17,
+                    }))
+                  }
                 />
               </div>
               <div>
                 <Label htmlFor="business_timezone">Timezone</Label>
                 <Select
                   value={settings.business_timezone}
-                  onValueChange={(value) => setSettings(prev => ({ ...prev, business_timezone: value }))}
+                  onValueChange={(value) =>
+                    setSettings((prev) => ({
+                      ...prev,
+                      business_timezone: value,
+                    }))
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {TIMEZONE_OPTIONS.map(tz => (
+                    {TIMEZONE_OPTIONS.map((tz) => (
                       <SelectItem key={tz.value} value={tz.value}>
                         {tz.label}
                       </SelectItem>
@@ -389,7 +500,12 @@ export default function Settings() {
                   id="campaign_end_date"
                   type="date"
                   value={settings.campaign_end_date}
-                  onChange={(e) => setSettings(prev => ({ ...prev, campaign_end_date: e.target.value }))}
+                  onChange={(e) =>
+                    setSettings((prev) => ({
+                      ...prev,
+                      campaign_end_date: e.target.value,
+                    }))
+                  }
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   All campaign processing will stop on this date
@@ -403,7 +519,12 @@ export default function Settings() {
                   min="1"
                   max="90"
                   value={settings.auto_extend_days}
-                  onChange={(e) => setSettings(prev => ({ ...prev, auto_extend_days: parseInt(e.target.value) || 30 }))}
+                  onChange={(e) =>
+                    setSettings((prev) => ({
+                      ...prev,
+                      auto_extend_days: parseInt(e.target.value) || 30,
+                    }))
+                  }
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   Default extension period when manually extending campaigns
@@ -420,15 +541,27 @@ export default function Settings() {
               </h4>
               <div className="grid md:grid-cols-3 gap-4 text-sm">
                 <div>
-                  <Label className="text-xs text-gray-500">Current End Date</Label>
+                  <Label className="text-xs text-gray-500">
+                    Current End Date
+                  </Label>
                   <p className="font-medium">
                     {new Date(settings.campaign_end_date).toLocaleDateString()}
                   </p>
                 </div>
                 <div>
-                  <Label className="text-xs text-gray-500">Days Remaining</Label>
+                  <Label className="text-xs text-gray-500">
+                    Days Remaining
+                  </Label>
                   <p className="font-medium">
-                    {Math.max(0, Math.ceil((new Date(settings.campaign_end_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)))} days
+                    {Math.max(
+                      0,
+                      Math.ceil(
+                        (new Date(settings.campaign_end_date).getTime() -
+                          new Date().getTime()) /
+                          (1000 * 60 * 60 * 24)
+                      )
+                    )}{" "}
+                    days
                   </p>
                 </div>
                 <div>
@@ -438,13 +571,21 @@ export default function Settings() {
                       size="sm"
                       variant="outline"
                       onClick={() => {
-                        const extendedDate = new Date(settings.campaign_end_date);
-                        extendedDate.setDate(extendedDate.getDate() + settings.auto_extend_days);
-                        setSettings(prev => ({
+                        const extendedDate = new Date(
+                          settings.campaign_end_date
+                        );
+                        extendedDate.setDate(
+                          extendedDate.getDate() + settings.auto_extend_days
+                        );
+                        setSettings((prev) => ({
                           ...prev,
-                          campaign_end_date: extendedDate.toISOString().split('T')[0]
+                          campaign_end_date: extendedDate
+                            .toISOString()
+                            .split("T")[0],
                         }));
-                        toast.success(`Campaign extended by ${settings.auto_extend_days} days`);
+                        toast.success(
+                          `Campaign extended by ${settings.auto_extend_days} days`
+                        );
                       }}
                     >
                       Extend
@@ -453,9 +594,11 @@ export default function Settings() {
                       size="sm"
                       variant="destructive"
                       onClick={() => {
-                        setSettings(prev => ({
+                        setSettings((prev) => ({
                           ...prev,
-                          campaign_end_date: new Date().toISOString().split('T')[0]
+                          campaign_end_date: new Date()
+                            .toISOString()
+                            .split("T")[0],
                         }));
                         toast.warning("Campaign will end today");
                       }}
