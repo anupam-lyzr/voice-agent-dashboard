@@ -125,7 +125,7 @@ export default function Agents() {
 
   const loadAgents = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/dashboard/agents`);
+      const response = await fetch(`${API_BASE_URL}/agents`);
       if (response.ok) {
         const data = await response.json();
         setAgents(data.agents || []);
@@ -158,8 +158,8 @@ export default function Agents() {
 
       const isEditing = editingAgent !== null;
       const url = isEditing
-        ? `${API_BASE_URL}/api/dashboard/agents/${editingAgent.id}`
-        : `${API_BASE_URL}/api/dashboard/agents`;
+        ? `${API_BASE_URL}/agents/${editingAgent.id}`
+        : `${API_BASE_URL}/agents`;
 
       const method = isEditing ? "PUT" : "POST";
 
@@ -236,12 +236,9 @@ export default function Agents() {
     if (!confirm(`Are you sure you want to deactivate ${agent.name}?`)) return;
 
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/dashboard/agents/${agent.id}`,
-        {
-          method: "DELETE",
-        }
-      );
+      const response = await fetch(`${API_BASE_URL}/agents/${agent.id}`, {
+        method: "DELETE",
+      });
 
       if (response.ok) {
         toast.success(`Agent ${agent.name} deactivated successfully!`);
