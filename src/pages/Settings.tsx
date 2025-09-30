@@ -105,7 +105,7 @@ export default function Settings() {
 
   const loadSettings = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/settings`);
+      const response = await fetch(`${API_BASE_URL}/settings`);
       if (response.ok) {
         const data = await response.json();
         setSettings(data);
@@ -122,7 +122,7 @@ export default function Settings() {
   const saveSettings = async () => {
     setSaving(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/settings`, {
+      const response = await fetch(`${API_BASE_URL}/settings`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(settings),
