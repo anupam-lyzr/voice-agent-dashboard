@@ -6,6 +6,7 @@ import { ScrollArea } from "./ui/scroll-area";
 import {
   LayoutDashboard,
   Users,
+  UserCog,
   Settings,
   TestTube,
   Headphones,
@@ -20,6 +21,7 @@ interface LayoutProps {
 const navigation = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "Clients", href: "/clients", icon: Users },
+  { name: "Agents", href: "/agents", icon: UserCog },
   { name: "Testing", href: "/testing", icon: TestTube },
   { name: "Settings", href: "/settings", icon: Settings },
 ];
