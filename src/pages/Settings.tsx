@@ -21,7 +21,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
 import {
@@ -238,7 +237,10 @@ export default function Settings() {
   };
 
   const updateArrayField = (
-    section: "medicare_settings" | "non_medicare_call_settings" | "non_medicare_email_settings",
+    section:
+      | "medicare_settings"
+      | "non_medicare_call_settings"
+      | "non_medicare_email_settings",
     field: string,
     value: string
   ) => {
@@ -275,7 +277,8 @@ export default function Settings() {
         <Alert variant="destructive">
           <AlertTriangle className="h-4 w-4" />
           <AlertDescription>
-            Failed to load campaign configuration. Please try refreshing the page.
+            Failed to load campaign configuration. Please try refreshing the
+            page.
           </AlertDescription>
         </Alert>
       </div>
@@ -296,7 +299,9 @@ export default function Settings() {
         </div>
         <div className="flex gap-2">
           <Button
-            onClick={config.status === "active" ? confirmStopCampaign : startCampaign}
+            onClick={
+              config.status === "active" ? confirmStopCampaign : startCampaign
+            }
             disabled={actionLoading}
             variant={config.status === "active" ? "destructive" : "default"}
           >
@@ -328,14 +333,17 @@ export default function Settings() {
                 No new contacts will be made until you start the campaign again.
               </p>
               <p className="mt-2 text-sm">
-                Clients will remain in their current state and resume from where they left off
-                when you restart.
+                Clients will remain in their current state and resume from where
+                they left off when you restart.
               </p>
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={stopCampaign} className="bg-red-600 hover:bg-red-700">
+            <AlertDialogAction
+              onClick={stopCampaign}
+              className="bg-red-600 hover:bg-red-700"
+            >
               Yes, Pause Campaign
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -346,11 +354,14 @@ export default function Settings() {
       <Alert variant={config.status === "active" ? "default" : "destructive"}>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Badge variant={config.status === "active" ? "default" : "secondary"}>
+            <Badge
+              variant={config.status === "active" ? "default" : "secondary"}
+            >
               {config.status.toUpperCase()}
             </Badge>
             <span className="text-sm">
-              Campaign is currently {config.status === "active" ? "running" : "paused"}
+              Campaign is currently{" "}
+              {config.status === "active" ? "running" : "paused"}
             </span>
           </div>
         </div>
@@ -412,7 +423,11 @@ export default function Settings() {
             <div>
               <Label>Status</Label>
               <div className="mt-2">
-                <Badge variant={config.medicare_settings.enabled ? "default" : "secondary"}>
+                <Badge
+                  variant={
+                    config.medicare_settings.enabled ? "default" : "secondary"
+                  }
+                >
                   {config.medicare_settings.enabled ? "Enabled" : "Disabled"}
                 </Badge>
               </div>
@@ -425,7 +440,11 @@ export default function Settings() {
               placeholder="0, 2, 4, 7, 10, 14"
               value={config.medicare_settings.email_cadence_days.join(", ")}
               onChange={(e) =>
-                updateArrayField("medicare_settings", "email_cadence_days", e.target.value)
+                updateArrayField(
+                  "medicare_settings",
+                  "email_cadence_days",
+                  e.target.value
+                )
               }
             />
             <p className="text-xs text-gray-500 mt-1">
@@ -501,9 +520,15 @@ export default function Settings() {
               <Label>Status</Label>
               <div className="mt-2">
                 <Badge
-                  variant={config.non_medicare_call_settings.enabled ? "default" : "secondary"}
+                  variant={
+                    config.non_medicare_call_settings.enabled
+                      ? "default"
+                      : "secondary"
+                  }
                 >
-                  {config.non_medicare_call_settings.enabled ? "Enabled" : "Disabled"}
+                  {config.non_medicare_call_settings.enabled
+                    ? "Enabled"
+                    : "Disabled"}
                 </Badge>
               </div>
             </div>
@@ -513,9 +538,15 @@ export default function Settings() {
             <Label>Call Cadence (Days)</Label>
             <Input
               placeholder="0, 2, 4, 7, 10, 14"
-              value={config.non_medicare_call_settings.call_cadence_days.join(", ")}
+              value={config.non_medicare_call_settings.call_cadence_days.join(
+                ", "
+              )}
               onChange={(e) =>
-                updateArrayField("non_medicare_call_settings", "call_cadence_days", e.target.value)
+                updateArrayField(
+                  "non_medicare_call_settings",
+                  "call_cadence_days",
+                  e.target.value
+                )
               }
             />
             <p className="text-xs text-gray-500 mt-1">
@@ -591,9 +622,15 @@ export default function Settings() {
               <Label>Status</Label>
               <div className="mt-2">
                 <Badge
-                  variant={config.non_medicare_email_settings.enabled ? "default" : "secondary"}
+                  variant={
+                    config.non_medicare_email_settings.enabled
+                      ? "default"
+                      : "secondary"
+                  }
                 >
-                  {config.non_medicare_email_settings.enabled ? "Enabled" : "Disabled"}
+                  {config.non_medicare_email_settings.enabled
+                    ? "Enabled"
+                    : "Disabled"}
                 </Badge>
               </div>
             </div>
@@ -603,9 +640,15 @@ export default function Settings() {
             <Label>Email Cadence (Days)</Label>
             <Input
               placeholder="0, 2, 4, 7, 10, 14"
-              value={config.non_medicare_email_settings.email_cadence_days.join(", ")}
+              value={config.non_medicare_email_settings.email_cadence_days.join(
+                ", "
+              )}
               onChange={(e) =>
-                updateArrayField("non_medicare_email_settings", "email_cadence_days", e.target.value)
+                updateArrayField(
+                  "non_medicare_email_settings",
+                  "email_cadence_days",
+                  e.target.value
+                )
               }
             />
             <p className="text-xs text-gray-500 mt-1">
@@ -639,8 +682,8 @@ export default function Settings() {
           <Alert>
             <Shield className="h-4 w-4" />
             <AlertDescription>
-              These are HARD LIMITS enforced at multiple levels. Changes affect all campaigns
-              immediately.
+              These are HARD LIMITS enforced at multiple levels. Changes affect
+              all campaigns immediately.
             </AlertDescription>
           </Alert>
 
@@ -657,7 +700,8 @@ export default function Settings() {
                     if (!prev) return null;
                     return {
                       ...prev,
-                      max_daily_emails_per_client: parseInt(e.target.value) || 1,
+                      max_daily_emails_per_client:
+                        parseInt(e.target.value) || 1,
                     };
                   })
                 }
@@ -697,7 +741,8 @@ export default function Settings() {
                     if (!prev) return null;
                     return {
                       ...prev,
-                      min_hours_between_contacts: parseInt(e.target.value) || 24,
+                      min_hours_between_contacts:
+                        parseInt(e.target.value) || 24,
                     };
                   })
                 }
@@ -706,7 +751,11 @@ export default function Settings() {
             </div>
           </div>
 
-          <Button onClick={saveAntiSpamSettings} disabled={saving} variant="destructive">
+          <Button
+            onClick={saveAntiSpamSettings}
+            disabled={saving}
+            variant="destructive"
+          >
             {saving ? (
               <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
             ) : (
