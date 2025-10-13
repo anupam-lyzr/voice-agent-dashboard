@@ -74,6 +74,9 @@ interface ClientRow {
   client_type: "medicare" | "non_medicare" | string;
   status: string;
   attempts: number;
+  contact_type: "call" | "email";
+  last_contacted: string | null;
+  tags: string[];
 }
 
 interface ActiveCallRow {
@@ -110,6 +113,7 @@ export default function Dashboard() {
   const [clientsSearch, setClientsSearch] = useState("");
   const [clientsTypeFilter, setClientsTypeFilter] = useState<string>("");
   const [clientsStatusFilter, setClientsStatusFilter] = useState<string>("");
+  const [clientsTagFilter, setClientsTagFilter] = useState<string>("");
   const [isLoadingClients, setIsLoadingClients] = useState(false);
   const [activeTab, setActiveTab] = useState("analytics");
 
@@ -206,6 +210,7 @@ export default function Dashboard() {
         if (clientsSearch) params.set("search", clientsSearch);
         if (clientsTypeFilter) params.set("client_type", clientsTypeFilter);
         if (clientsStatusFilter) params.set("status", clientsStatusFilter);
+        if (clientsTagFilter) params.set("tag", clientsTagFilter);
         const res = await fetch(`${API_BASE_URL}/clients?${params.toString()}`);
         if (res.ok) {
           const data = await res.json();
@@ -219,7 +224,7 @@ export default function Dashboard() {
         setIsLoadingClients(false);
       }
     },
-    [clientsSearch, clientsTypeFilter, clientsStatusFilter]
+    [clientsSearch, clientsTypeFilter, clientsStatusFilter, clientsTagFilter]
   );
 
   useEffect(() => {
@@ -512,80 +517,167 @@ export default function Dashboard() {
 
           {/* Campaign Progress Section */}
           {campaignProgress && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Campaign Progress</CardTitle>
-                <CardDescription>
-                  Real-time campaign status and batch tracking
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-blue-600">
-                      {campaignProgress.ready_for_campaign}
+            <div className="space-y-6">
+              {/* Medicare Email Campaign */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Medicare Email Campaign</CardTitle>
+                  <CardDescription>
+                    Progressive email outreach (6 emails over time)
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-blue-600">
+                        {campaignProgress.medicare?.total || 0}
+                      </div>
+                      <div className="text-sm text-muted-foreground">Total Medicare</div>
                     </div>
-                    <div className="text-sm text-muted-foreground">Ready</div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-yellow-600">
+                        {campaignProgress.medicare?.pending || 0}
+                      </div>
+                      <div className="text-sm text-muted-foreground">Pending</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-600">
+                        {campaignProgress.medicare?.in_progress || 0}
+                      </div>
+                      <div className="text-sm text-muted-foreground">In Progress</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold">
+                        {campaignProgress.medicare?.completed || 0}
+                      </div>
+                      <div className="text-sm text-muted-foreground">Completed</div>
+                    </div>
                   </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-yellow-600">
-                      {campaignProgress.in_progress}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      In Progress
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-green-600">
-                      {campaignProgress.completed}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      Completed
-                    </div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold">
-                      {campaignProgress.total_clients}
-                    </div>
-                    <div className="text-sm text-muted-foreground">Total</div>
-                  </div>
-                </div>
 
-                {campaignProgress.recent_campaigns &&
-                  campaignProgress.recent_campaigns.length > 0 && (
-                    <div className="border-t pt-4">
-                      <div className="text-sm font-medium mb-2">
-                        Recent Campaign Batches
+                  {/* CRM Outcomes */}
+                  <div className="border-t mt-4 pt-4">
+                    <div className="text-sm font-medium mb-3">Campaign Outcomes</div>
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="text-center">
+                        <div className="text-xl font-bold text-green-600">
+                          {campaignProgress.medicare?.interested_count || 0}
+                        </div>
+                        <div className="text-xs text-muted-foreground">Interested</div>
                       </div>
-                      <div className="space-y-2">
-                        {campaignProgress.recent_campaigns.map(
-                          (batch: any, idx: number) => (
-                            <div
-                              key={idx}
-                              className="flex justify-between items-center text-sm"
-                            >
-                              <span>
-                                {batch.batch_name || batch.campaign_batch}
-                              </span>
-                              <Badge
-                                variant={
-                                  batch.status === "completed"
-                                    ? "default"
-                                    : batch.status === "in_progress"
-                                    ? "secondary"
-                                    : "outline"
-                                }
-                              >
-                                {batch.status}
-                              </Badge>
-                            </div>
-                          )
-                        )}
+                      <div className="text-center">
+                        <div className="text-xl font-bold text-red-600">
+                          {campaignProgress.medicare?.dnc_count || 0}
+                        </div>
+                        <div className="text-xs text-muted-foreground">DNC</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-xl font-bold text-orange-600">
+                          {campaignProgress.medicare?.unsubscribed_count || 0}
+                        </div>
+                        <div className="text-xs text-muted-foreground">Unsubscribed</div>
                       </div>
                     </div>
-                  )}
-              </CardContent>
-            </Card>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Non-Medicare Call Campaign */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Non-Medicare Call Campaign</CardTitle>
+                  <CardDescription>
+                    Progressive voice calls (6 attempts max)
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-blue-600">
+                        {campaignProgress.non_medicare_calls?.total || 0}
+                      </div>
+                      <div className="text-sm text-muted-foreground">Total Non-Medicare</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-yellow-600">
+                        {campaignProgress.non_medicare_calls?.pending || 0}
+                      </div>
+                      <div className="text-sm text-muted-foreground">Pending</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-600">
+                        {campaignProgress.non_medicare_calls?.in_progress || 0}
+                      </div>
+                      <div className="text-sm text-muted-foreground">In Progress</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-2xl font-bold">
+                        {campaignProgress.non_medicare_calls?.completed || 0}
+                      </div>
+                      <div className="text-sm text-muted-foreground">Completed</div>
+                    </div>
+                  </div>
+
+                  {/* CRM Outcomes */}
+                  <div className="border-t mt-4 pt-4">
+                    <div className="text-sm font-medium mb-3">Campaign Outcomes</div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="text-center">
+                        <div className="text-xl font-bold text-green-600">
+                          {campaignProgress.non_medicare_calls?.interested_count || 0}
+                        </div>
+                        <div className="text-xs text-muted-foreground">Interested</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-xl font-bold text-red-600">
+                          {campaignProgress.non_medicare_calls?.dnc_count || 0}
+                        </div>
+                        <div className="text-xs text-muted-foreground">DNC</div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Non-Medicare Email Fallback (only show if exists) */}
+              {campaignProgress.non_medicare_emails?.total > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Non-Medicare Email Fallback</CardTitle>
+                    <CardDescription>
+                      Email campaigns after call attempts exhausted
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-4 gap-4">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold">
+                          {campaignProgress.non_medicare_emails.total}
+                        </div>
+                        <div className="text-sm text-muted-foreground">In Email Phase</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-yellow-600">
+                          {campaignProgress.non_medicare_emails.pending}
+                        </div>
+                        <div className="text-sm text-muted-foreground">Pending</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-green-600">
+                          {campaignProgress.non_medicare_emails.in_progress}
+                        </div>
+                        <div className="text-sm text-muted-foreground">In Progress</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold">
+                          {campaignProgress.non_medicare_emails.completed}
+                        </div>
+                        <div className="text-sm text-muted-foreground">Completed</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
           )}
 
           <Card>
@@ -717,6 +809,16 @@ export default function Dashboard() {
                   <option value="in_progress">In Progress</option>
                   <option value="completed">Completed</option>
                 </select>
+                <select
+                  className="border rounded-md px-2 py-1"
+                  value={clientsTagFilter}
+                  onChange={(e) => setClientsTagFilter(e.target.value)}
+                >
+                  <option value="">All Tags</option>
+                  <option value="LYZR-UC1-INTERESTED">Interested</option>
+                  <option value="LYZR-UC1-DNC-REQUESTED">DNC</option>
+                  <option value="LYZR-UC1-NOT-INTERESTED">Not Interested</option>
+                </select>
                 <Button
                   variant="outline"
                   onClick={() => fetchClients(1)}
@@ -734,7 +836,10 @@ export default function Dashboard() {
                     <TableHead>Agent</TableHead>
                     <TableHead>Type</TableHead>
                     <TableHead>Status</TableHead>
+                    <TableHead>Contact Type</TableHead>
                     <TableHead>Attempts</TableHead>
+                    <TableHead>Last Contact</TableHead>
+                    <TableHead>Tags</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -758,7 +863,34 @@ export default function Dashboard() {
                       <TableCell>
                         <Badge variant="outline">{c.status}</Badge>
                       </TableCell>
-                      <TableCell>{c.attempts}</TableCell>
+                      <TableCell>
+                        <Badge variant={c.contact_type === "email" ? "secondary" : "outline"}>
+                          {c.contact_type === "email" ? "📧 Email" : "📞 Call"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{c.attempts}/6</TableCell>
+                      <TableCell>
+                        {c.last_contacted
+                          ? new Date(c.last_contacted).toLocaleDateString()
+                          : <span className="text-muted-foreground">Never</span>}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap gap-1">
+                          {c.tags?.length > 0 ? c.tags.map((tag, i) => (
+                            <Badge
+                              key={i}
+                              variant={
+                                tag.includes("INTERESTED") ? "default" :
+                                tag.includes("DNC") ? "destructive" :
+                                "outline"
+                              }
+                              className="text-xs"
+                            >
+                              {tag.replace("LYZR-UC1-", "").replace(/_/g, " ")}
+                            </Badge>
+                          )) : <span className="text-muted-foreground text-xs">-</span>}
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
