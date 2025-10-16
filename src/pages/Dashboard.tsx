@@ -24,6 +24,16 @@ import {
   TrendingUp,
   Activity,
   RefreshCw,
+  MessageSquare,
+  PhoneOff,
+  XCircle,
+  UserX,
+  ThumbsUp,
+  ThumbsDown,
+  Calendar,
+  Ban,
+  Mail,
+  HelpCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Input } from "../components/ui/input";
@@ -33,6 +43,12 @@ import {
   TabsList,
   TabsTrigger,
 } from "../components/ui/tabs";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../components/ui/tooltip";
 
 interface CampaignStats {
   total_clients: number;
@@ -46,6 +62,27 @@ interface CampaignStats {
   interest_rate: number;
   real_outcomes: Record<string, number>;
   last_updated: string;
+
+  // NEW FIELDS
+  total_conversations?: number;
+  avg_call_duration?: number;
+  call_status_breakdown?: {
+    total_calls_made: number;
+    calls_answered: number;
+    voicemail: number;
+    busy: number;
+    failed: number;
+    no_contact: number;
+  };
+  conversation_outcomes_breakdown?: {
+    interested_yes_no: number;
+    schedule_invite_yes_yes: number;
+    not_interested_no: number;
+    dnc_requested_no_no: number;
+    keep_communications_no_yes: number;
+    voicemail: number;
+    no_outcome: number;
+  };
 }
 
 interface CallLog {
@@ -126,6 +163,7 @@ export default function Dashboard() {
   // const [isSavingSettings, setIsSavingSettings] = useState(false);
 
   // Campaign progress state
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [campaignProgress, setCampaignProgress] = useState<any>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   // const [maxAttempts, setMaxAttempts] = useState<string>("6");
@@ -314,668 +352,891 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="p-8 space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            Voice Agent Dashboard
-          </h1>
-          <p className="text-muted-foreground">
-            Production campaign monitoring and testing interface
-          </p>
-        </div>
-        <div className="flex items-center space-x-4">
-          <Button
-            onClick={async () => {
-              try {
-                setIsProcessing(true);
-                const res = await fetch(
-                  `${API_BASE_URL}/trigger-campaign-processor`,
-                  { method: "POST" }
-                );
-                if (res.ok) {
-                  const data = await res.json();
-                  toast.success(
-                    data.message || "Campaign started successfully"
+    <TooltipProvider>
+      <div className="p-8 space-y-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">
+              Voice Agent Dashboard
+            </h1>
+            <p className="text-muted-foreground">
+              Production campaign monitoring and testing interface
+            </p>
+          </div>
+          <div className="flex items-center space-x-4">
+            <Button
+              onClick={async () => {
+                try {
+                  setIsProcessing(true);
+                  const res = await fetch(
+                    `${API_BASE_URL}/trigger-campaign-processor`,
+                    { method: "POST" }
                   );
-                  // Refresh campaign progress and stats
-                  await fetchCampaignProgress();
-                } else {
+                  if (res.ok) {
+                    const data = await res.json();
+                    toast.success(
+                      data.message || "Campaign started successfully"
+                    );
+                    // Refresh campaign progress and stats
+                    await fetchCampaignProgress();
+                  } else {
+                    toast.error("Failed to start campaign");
+                  }
+                } catch (error) {
+                  console.error("Start campaign error:", error);
                   toast.error("Failed to start campaign");
+                } finally {
+                  setIsProcessing(false);
                 }
-              } catch (error) {
-                console.error("Start campaign error:", error);
-                toast.error("Failed to start campaign");
-              } finally {
-                setIsProcessing(false);
-              }
-            }}
-            disabled={isProcessing}
-            size="sm"
-          >
-            {isProcessing ? "Starting..." : "Start Campaign"}
-          </Button>
-          <Badge variant="outline" className="text-xs">
-            Last updated: {lastRefresh.toLocaleTimeString()}
-          </Badge>
-          <Button
-            onClick={fetchData}
-            disabled={isLoading}
-            size="sm"
-            variant="outline"
-          >
-            <RefreshCw
-              className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
-            />
-            <span className="ml-2">Refresh</span>
-          </Button>
+              }}
+              disabled={isProcessing}
+              size="sm"
+            >
+              {isProcessing ? "Starting..." : "Start Campaign"}
+            </Button>
+            <Badge variant="outline" className="text-xs">
+              Last updated: {lastRefresh.toLocaleTimeString()}
+            </Badge>
+            <Button
+              onClick={fetchData}
+              disabled={isLoading}
+              size="sm"
+              variant="outline"
+            >
+              <RefreshCw
+                className={`h-4 w-4 ${isLoading ? "animate-spin" : ""}`}
+              />
+              <span className="ml-2">Refresh</span>
+            </Button>
+          </div>
         </div>
-      </div>
 
-      <Tabs
-        value={activeTab}
-        onValueChange={setActiveTab}
-        className="mt-6 space-y-6"
-      >
-        <TabsList className="grid grid-cols-2 w-full">
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
-          <TabsTrigger value="live-activity">Live Activity</TabsTrigger>
-        </TabsList>
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="mt-6 space-y-6"
+        >
+          <TabsList className="grid grid-cols-2 w-full">
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="live-activity">Live Activity</TabsTrigger>
+          </TabsList>
 
-        {/* Analytics Tab */}
-        <TabsContent value="analytics" className="space-y-6">
-          {stats && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Total Clients
-                  </CardTitle>
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {stats.total_clients.toLocaleString()}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {stats.pending_clients.toLocaleString()} pending
-                  </p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Completed Calls
-                  </CardTitle>
-                  <Phone className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {stats.completed_calls.toLocaleString()}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {stats.completion_rate.toFixed(1)}% completion rate
-                  </p>
-                  <Progress value={stats.completion_rate} className="mt-2" />
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Interested Clients
-                  </CardTitle>
-                  <CheckCircle className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-green-600">
-                    {stats.interested_clients.toLocaleString()}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {stats.interest_rate.toFixed(1)}% interest rate
-                  </p>
-                  <Progress value={stats.interest_rate} className="mt-2" />
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Not Interested
-                  </CardTitle>
-                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">
-                    {stats.not_interested_clients.toLocaleString()}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Campaign responses
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {/* Additional Analytics Row */}
-          {stats && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    DNC Requests
-                  </CardTitle>
-                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-red-600">
-                    {stats.dnc_requests?.toLocaleString() || 0}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Do not call requests
-                  </p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    No Answer
-                  </CardTitle>
-                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-yellow-600">
-                    {stats.no_answer_clients?.toLocaleString() || 0}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    No answer + voicemail
-                  </p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Real Outcomes
-                  </CardTitle>
-                  <Activity className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-sm space-y-1">
-                    {Object.entries(stats.real_outcomes || {}).map(
-                      ([outcome, count]) => (
-                        <div key={outcome} className="flex justify-between">
-                          <span className="capitalize">
-                            {outcome.replace("_", " ")}
-                          </span>
-                          <span className="font-medium">{count}</span>
-                        </div>
-                      )
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {/* Campaign Progress Section */}
-          {campaignProgress && (
-            <div className="space-y-6">
-              {/* Medicare Email Campaign */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Medicare Email Campaign</CardTitle>
-                  <CardDescription>
-                    Progressive email outreach (6 emails over time)
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-blue-600">
-                        {campaignProgress.medicare?.total || 0}
-                      </div>
-                      <div className="text-sm text-muted-foreground">Total Medicare</div>
+          {/* Analytics Tab */}
+          <TabsContent value="analytics" className="space-y-6">
+            {stats && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <CardTitle className="text-sm font-medium">
+                          Total Clients
+                        </CardTitle>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Total number of clients in the campaign</p>
+                      </TooltipContent>
+                    </Tooltip>
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {stats.total_clients.toLocaleString()}
                     </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-yellow-600">
-                        {campaignProgress.medicare?.pending || 0}
-                      </div>
-                      <div className="text-sm text-muted-foreground">Pending</div>
+                    <p className="text-xs text-muted-foreground">
+                      {stats.pending_clients.toLocaleString()} pending
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <CardTitle className="text-sm font-medium">
+                          Completed Calls
+                        </CardTitle>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>
+                          Calls that were answered and completed (from Twilio
+                          status: completed)
+                        </p>
+                      </TooltipContent>
+                    </Tooltip>
+                    <Phone className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {stats.completed_calls.toLocaleString()}
                     </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-green-600">
-                        {campaignProgress.medicare?.in_progress || 0}
-                      </div>
-                      <div className="text-sm text-muted-foreground">In Progress</div>
+                    <p className="text-xs text-muted-foreground">
+                      {stats.completion_rate.toFixed(1)}% completion rate
+                    </p>
+                    <Progress value={stats.completion_rate} className="mt-2" />
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">
+                      Interested Clients
+                    </CardTitle>
+                    <CheckCircle className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-green-600">
+                      {stats.interested_clients.toLocaleString()}
                     </div>
-                    <div className="text-center">
+                    <p className="text-xs text-muted-foreground">
+                      {stats.interest_rate.toFixed(1)}% interest rate
+                    </p>
+                    <Progress value={stats.interest_rate} className="mt-2" />
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">
+                      Not Interested
+                    </CardTitle>
+                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">
+                      {stats.not_interested_clients.toLocaleString()}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Campaign responses
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* Additional Analytics Row */}
+            {stats && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">
+                      DNC Requests
+                    </CardTitle>
+                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-red-600">
+                      {stats.dnc_requests?.toLocaleString() || 0}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Do not call requests
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">
+                      No Answer
+                    </CardTitle>
+                    <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-yellow-600">
+                      {stats.no_answer_clients?.toLocaleString() || 0}
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      No answer + voicemail
+                    </p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">
+                      Real Outcomes
+                    </CardTitle>
+                    <Activity className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-sm space-y-1">
+                      {Object.entries(stats.real_outcomes || {}).map(
+                        ([outcome, count]) => (
+                          <div key={outcome} className="flex justify-between">
+                            <span className="capitalize">
+                              {outcome.replace("_", " ")}
+                            </span>
+                            <span className="font-medium">{count}</span>
+                          </div>
+                        )
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
+
+            {/* NEW BREAKDOWN CARDS */}
+            {stats?.call_status_breakdown && (
+              <div className="mt-8">
+                <h3 className="text-lg font-semibold mb-4">
+                  Call Status Breakdown
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <CardTitle className="text-sm font-medium">
+                            Total Calls Made
+                          </CardTitle>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Total number of call attempts made</p>
+                        </TooltipContent>
+                      </Tooltip>
+                      <Phone className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
                       <div className="text-2xl font-bold">
-                        {campaignProgress.medicare?.completed || 0}
+                        {stats.call_status_breakdown?.total_calls_made.toLocaleString()}
                       </div>
-                      <div className="text-sm text-muted-foreground">Completed</div>
-                    </div>
-                  </div>
+                    </CardContent>
+                  </Card>
 
-                  {/* CRM Outcomes */}
-                  <div className="border-t mt-4 pt-4">
-                    <div className="text-sm font-medium mb-3">Campaign Outcomes</div>
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="text-center">
-                        <div className="text-xl font-bold text-green-600">
-                          {campaignProgress.medicare?.interested_count || 0}
-                        </div>
-                        <div className="text-xs text-muted-foreground">Interested</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-xl font-bold text-red-600">
-                          {campaignProgress.medicare?.dnc_count || 0}
-                        </div>
-                        <div className="text-xs text-muted-foreground">DNC</div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-xl font-bold text-orange-600">
-                          {campaignProgress.medicare?.unsubscribed_count || 0}
-                        </div>
-                        <div className="text-xs text-muted-foreground">Unsubscribed</div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Non-Medicare Call Campaign */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Non-Medicare Call Campaign</CardTitle>
-                  <CardDescription>
-                    Progressive voice calls (6 attempts max)
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-blue-600">
-                        {campaignProgress.non_medicare_calls?.total || 0}
-                      </div>
-                      <div className="text-sm text-muted-foreground">Total Non-Medicare</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-yellow-600">
-                        {campaignProgress.non_medicare_calls?.pending || 0}
-                      </div>
-                      <div className="text-sm text-muted-foreground">Pending</div>
-                    </div>
-                    <div className="text-center">
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <CardTitle className="text-sm font-medium">
+                            Calls Answered
+                          </CardTitle>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>
+                            Calls that were answered (Twilio status: completed)
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                    </CardHeader>
+                    <CardContent>
                       <div className="text-2xl font-bold text-green-600">
-                        {campaignProgress.non_medicare_calls?.in_progress || 0}
+                        {stats.call_status_breakdown?.calls_answered.toLocaleString()}
                       </div>
-                      <div className="text-sm text-muted-foreground">In Progress</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold">
-                        {campaignProgress.non_medicare_calls?.completed || 0}
-                      </div>
-                      <div className="text-sm text-muted-foreground">Completed</div>
-                    </div>
-                  </div>
+                    </CardContent>
+                  </Card>
 
-                  {/* CRM Outcomes */}
-                  <div className="border-t mt-4 pt-4">
-                    <div className="text-sm font-medium mb-3">Campaign Outcomes</div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="text-center">
-                        <div className="text-xl font-bold text-green-600">
-                          {campaignProgress.non_medicare_calls?.interested_count || 0}
-                        </div>
-                        <div className="text-xs text-muted-foreground">Interested</div>
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <CardTitle className="text-sm font-medium">
+                            Voicemail
+                          </CardTitle>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>
+                            Calls that went to voicemail (detected by our
+                            system)
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                      <MessageSquare className="h-4 w-4 text-blue-600" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold text-blue-600">
+                        {stats.call_status_breakdown?.voicemail.toLocaleString()}
                       </div>
-                      <div className="text-center">
-                        <div className="text-xl font-bold text-red-600">
-                          {campaignProgress.non_medicare_calls?.dnc_count || 0}
-                        </div>
-                        <div className="text-xs text-muted-foreground">DNC</div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                    </CardContent>
+                  </Card>
 
-              {/* Non-Medicare Email Fallback (only show if exists) */}
-              {campaignProgress.non_medicare_emails?.total > 0 && (
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <CardTitle className="text-sm font-medium">
+                            Busy
+                          </CardTitle>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Calls that received a busy signal</p>
+                        </TooltipContent>
+                      </Tooltip>
+                      <PhoneOff className="h-4 w-4 text-orange-600" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold text-orange-600">
+                        {stats.call_status_breakdown?.busy.toLocaleString()}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <CardTitle className="text-sm font-medium">
+                            Failed
+                          </CardTitle>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Calls that failed (likely invalid numbers)</p>
+                        </TooltipContent>
+                      </Tooltip>
+                      <XCircle className="h-4 w-4 text-red-600" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold text-red-600">
+                        {stats.call_status_breakdown?.failed.toLocaleString()}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <CardTitle className="text-sm font-medium">
+                            No Contact
+                          </CardTitle>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Calls with no answer or no conversation</p>
+                        </TooltipContent>
+                      </Tooltip>
+                      <UserX className="h-4 w-4 text-gray-600" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold text-gray-600">
+                        {stats.call_status_breakdown?.no_contact.toLocaleString()}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            )}
+
+            {/* Conversation Outcomes Breakdown */}
+            {stats?.conversation_outcomes_breakdown && (
+              <div className="mt-8">
+                <h3 className="text-lg font-semibold mb-4">
+                  Conversation Outcomes (Answered Calls)
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <CardTitle className="text-sm font-medium">
+                            Interested (Yes + No)
+                          </CardTitle>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>
+                            Clients who said Yes to interest but No to
+                            scheduling
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                      <ThumbsUp className="h-4 w-4 text-green-600" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold text-green-600">
+                        {stats.conversation_outcomes_breakdown?.interested_yes_no.toLocaleString()}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <CardTitle className="text-sm font-medium">
+                            Schedule Invite (Yes + Yes)
+                          </CardTitle>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>
+                            Clients who said Yes to both interest and scheduling
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                      <Calendar className="h-4 w-4 text-blue-600" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold text-blue-600">
+                        {stats.conversation_outcomes_breakdown?.schedule_invite_yes_yes.toLocaleString()}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <CardTitle className="text-sm font-medium">
+                            Not Interested (No)
+                          </CardTitle>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Clients who said No to interest</p>
+                        </TooltipContent>
+                      </Tooltip>
+                      <ThumbsDown className="h-4 w-4 text-red-600" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold text-red-600">
+                        {stats.conversation_outcomes_breakdown?.not_interested_no.toLocaleString()}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <CardTitle className="text-sm font-medium">
+                            DNC Requested (No + No)
+                          </CardTitle>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>
+                            Clients who said No to both interest and future
+                            contact
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                      <Ban className="h-4 w-4 text-red-600" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold text-red-600">
+                        {stats.conversation_outcomes_breakdown?.dnc_requested_no_no.toLocaleString()}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <CardTitle className="text-sm font-medium">
+                            Keep Communications (No + Yes)
+                          </CardTitle>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>
+                            Clients who said No to interest but Yes to future
+                            contact
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                      <Mail className="h-4 w-4 text-yellow-600" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold text-yellow-600">
+                        {stats.conversation_outcomes_breakdown?.keep_communications_no_yes.toLocaleString()}
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <CardTitle className="text-sm font-medium">
+                            No Outcome
+                          </CardTitle>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>
+                            Answered calls with no clear conversation outcome
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                      <HelpCircle className="h-4 w-4 text-gray-600" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold text-gray-600">
+                        {stats.conversation_outcomes_breakdown?.no_outcome.toLocaleString()}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            )}
+
+            {/* Campaign Progress Section */}
+            {campaignProgress && (
+              <div className="space-y-6">
+                {/* Medicare Email Campaign */}
                 <Card>
                   <CardHeader>
-                    <CardTitle>Non-Medicare Email Fallback</CardTitle>
+                    <CardTitle>Medicare Email Campaign</CardTitle>
                     <CardDescription>
-                      Email campaigns after call attempts exhausted
+                      Progressive email outreach (6 emails over time)
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-4 gap-4">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                       <div className="text-center">
-                        <div className="text-2xl font-bold">
-                          {campaignProgress.non_medicare_emails.total}
+                        <div className="text-2xl font-bold text-blue-600">
+                          {campaignProgress.medicare?.total || 0}
                         </div>
-                        <div className="text-sm text-muted-foreground">In Email Phase</div>
+                        <div className="text-sm text-muted-foreground">
+                          Total Medicare
+                        </div>
                       </div>
                       <div className="text-center">
                         <div className="text-2xl font-bold text-yellow-600">
-                          {campaignProgress.non_medicare_emails.pending}
+                          {campaignProgress.medicare?.pending || 0}
                         </div>
-                        <div className="text-sm text-muted-foreground">Pending</div>
+                        <div className="text-sm text-muted-foreground">
+                          Pending
+                        </div>
                       </div>
                       <div className="text-center">
                         <div className="text-2xl font-bold text-green-600">
-                          {campaignProgress.non_medicare_emails.in_progress}
+                          {campaignProgress.medicare?.in_progress || 0}
                         </div>
-                        <div className="text-sm text-muted-foreground">In Progress</div>
+                        <div className="text-sm text-muted-foreground">
+                          In Progress
+                        </div>
                       </div>
                       <div className="text-center">
                         <div className="text-2xl font-bold">
-                          {campaignProgress.non_medicare_emails.completed}
+                          {campaignProgress.medicare?.completed || 0}
                         </div>
-                        <div className="text-sm text-muted-foreground">Completed</div>
+                        <div className="text-sm text-muted-foreground">
+                          Completed
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* CRM Outcomes */}
+                    <div className="border-t mt-4 pt-4">
+                      <div className="text-sm font-medium mb-3">
+                        Campaign Outcomes
+                      </div>
+                      <div className="grid grid-cols-3 gap-4">
+                        <div className="text-center">
+                          <div className="text-xl font-bold text-green-600">
+                            {campaignProgress.medicare?.interested_count || 0}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            Interested
+                          </div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-xl font-bold text-red-600">
+                            {campaignProgress.medicare?.dnc_count || 0}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            DNC
+                          </div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-xl font-bold text-orange-600">
+                            {campaignProgress.medicare?.unsubscribed_count || 0}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            Unsubscribed
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </CardContent>
                 </Card>
-              )}
-            </div>
-          )}
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Activity className="h-5 w-5 mr-2" />
-                Recent Call Activity
-              </CardTitle>
-              <CardDescription>
-                Latest call outcomes and summaries
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {callLogs.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Call ID</TableHead>
-                      <TableHead>Client</TableHead>
-                      <TableHead>Outcome</TableHead>
-                      <TableHead>Duration</TableHead>
-                      <TableHead>Attempts</TableHead>
-                      <TableHead>Next Call</TableHead>
-                      <TableHead>Time</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {callLogs.map((log) => (
-                      <TableRow
-                        key={log.call_id}
-                        className={
-                          log.is_test_call
-                            ? "bg-blue-50 dark:bg-blue-900/20"
-                            : ""
-                        }
-                      >
-                        <TableCell className="font-medium">
-                          {log.call_id.substring(0, 8)}...
-                          {log.is_test_call && (
-                            <Badge variant="outline" className="ml-2 text-xs">
-                              Test
-                            </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <div>
-                            <div>{log.client_name || log.client_phone}</div>
-                            {log.agent_assigned && (
-                              <div className="text-xs text-muted-foreground">
-                                Agent: {log.agent_assigned}
-                              </div>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge {...getOutcomeBadge(log.outcome)}>
-                            {log.outcome.replace("_", " ")}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>{log.duration}</TableCell>
-                        <TableCell>
-                          <div className="text-sm">
-                            {log.total_attempts || 0}/
-                            {6 - (log.attempts_left || 0)} made
+                {/* Non-Medicare Call Campaign */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Non-Medicare Call Campaign</CardTitle>
+                    <CardDescription>
+                      Progressive voice calls (max attempts configurable)
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-blue-600">
+                          {campaignProgress.non_medicare_calls?.total || 0}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          Total Non-Medicare
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-yellow-600">
+                          {campaignProgress.non_medicare_calls?.pending || 0}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          Pending
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold text-green-600">
+                          {campaignProgress.non_medicare_calls?.in_progress ||
+                            0}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          In Progress
+                        </div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-2xl font-bold">
+                          {campaignProgress.non_medicare_calls?.completed || 0}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          Completed
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* CRM Outcomes */}
+                    <div className="border-t mt-4 pt-4">
+                      <div className="text-sm font-medium mb-3">
+                        Campaign Outcomes
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="text-center">
+                          <div className="text-xl font-bold text-green-600">
+                            {campaignProgress.non_medicare_calls
+                              ?.interested_count || 0}
                           </div>
                           <div className="text-xs text-muted-foreground">
-                            {log.attempts_left || 0} left
+                            Interested
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          {log.next_call_scheduled ? (
-                            <div className="text-sm">
-                              {new Date(
-                                log.next_call_scheduled
-                              ).toLocaleDateString()}
-                            </div>
-                          ) : (
-                            <span className="text-muted-foreground text-sm">
-                              -
-                            </span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {new Date(log.started_at).toLocaleTimeString()}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  No recent call activity found
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-xl font-bold text-red-600">
+                            {campaignProgress.non_medicare_calls?.dnc_count ||
+                              0}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            DNC
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
-          {/* Clients Table (already built) */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Clients</CardTitle>
-              <CardDescription>
-                All clients in the active campaign pool
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex gap-2 mb-4">
-                <Input
-                  placeholder="Search name/phone/email"
-                  value={clientsSearch}
-                  onChange={(e) => setClientsSearch(e.target.value)}
-                />
-                <select
-                  className="border rounded-md px-2 py-1"
-                  value={clientsTypeFilter}
-                  onChange={(e) => setClientsTypeFilter(e.target.value)}
-                >
-                  <option value="">All Types</option>
-                  <option value="medicare">Medicare</option>
-                  <option value="non_medicare">Non-Medicare</option>
-                </select>
-                <select
-                  className="border rounded-md px-2 py-1"
-                  value={clientsStatusFilter}
-                  onChange={(e) => setClientsStatusFilter(e.target.value)}
-                >
-                  <option value="">All Status</option>
-                  <option value="pending">Pending</option>
-                  <option value="in_progress">In Progress</option>
-                  <option value="completed">Completed</option>
-                </select>
-                <select
-                  className="border rounded-md px-2 py-1"
-                  value={clientsTagFilter}
-                  onChange={(e) => setClientsTagFilter(e.target.value)}
-                >
-                  <option value="">All Tags</option>
-                  <option value="LYZR-UC1-INTERESTED">Interested</option>
-                  <option value="LYZR-UC1-DNC-REQUESTED">DNC</option>
-                  <option value="LYZR-UC1-NOT-INTERESTED">Not Interested</option>
-                </select>
-                <Button
-                  variant="outline"
-                  onClick={() => fetchClients(1)}
-                  disabled={isLoadingClients}
-                >
-                  Filter
-                </Button>
+                {/* Non-Medicare Email Fallback (only show if exists) */}
+                {campaignProgress.non_medicare_emails?.total > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Non-Medicare Email Fallback</CardTitle>
+                      <CardDescription>
+                        Email campaigns after call attempts exhausted
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-4 gap-4">
+                        <div className="text-center">
+                          <div className="text-2xl font-bold">
+                            {campaignProgress.non_medicare_emails.total}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            In Email Phase
+                          </div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-yellow-600">
+                            {campaignProgress.non_medicare_emails.pending}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            Pending
+                          </div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-green-600">
+                            {campaignProgress.non_medicare_emails.in_progress}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            In Progress
+                          </div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold">
+                            {campaignProgress.non_medicare_emails.completed}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            Completed
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
               </div>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Phone</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Agent</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Contact Type</TableHead>
-                    <TableHead>Attempts</TableHead>
-                    <TableHead>Last Contact</TableHead>
-                    <TableHead>Tags</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {clients.map((c) => (
-                    <TableRow key={c.id}>
-                      <TableCell className="font-medium">{c.name}</TableCell>
-                      <TableCell>{c.phone}</TableCell>
-                      <TableCell>{c.email}</TableCell>
-                      <TableCell>{c.agent}</TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            c.client_type === "medicare"
-                              ? "default"
-                              : "secondary"
+            )}
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Activity className="h-5 w-5 mr-2" />
+                  Recent Call Activity
+                </CardTitle>
+                <CardDescription>
+                  Latest call outcomes and summaries
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {callLogs.length > 0 ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Call ID</TableHead>
+                        <TableHead>Client</TableHead>
+                        <TableHead>Outcome</TableHead>
+                        <TableHead>Duration</TableHead>
+                        <TableHead>Attempts</TableHead>
+                        <TableHead>Next Call</TableHead>
+                        <TableHead>Time</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {callLogs.map((log) => (
+                        <TableRow
+                          key={log.call_id}
+                          className={
+                            log.is_test_call
+                              ? "bg-blue-50 dark:bg-blue-900/20"
+                              : ""
                           }
                         >
-                          {c.client_type}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{c.status}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant={c.contact_type === "email" ? "secondary" : "outline"}>
-                          {c.contact_type === "email" ? "📧 Email" : "📞 Call"}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>{c.attempts}/6</TableCell>
-                      <TableCell>
-                        {c.last_contacted
-                          ? new Date(c.last_contacted).toLocaleDateString()
-                          : <span className="text-muted-foreground">Never</span>}
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex flex-wrap gap-1">
-                          {c.tags?.length > 0 ? c.tags.map((tag, i) => (
-                            <Badge
-                              key={i}
-                              variant={
-                                tag.includes("INTERESTED") ? "default" :
-                                tag.includes("DNC") ? "destructive" :
-                                "outline"
-                              }
-                              className="text-xs"
-                            >
-                              {tag.replace("LYZR-UC1-", "").replace(/_/g, " ")}
+                          <TableCell className="font-medium">
+                            {log.call_id.substring(0, 8)}...
+                            {log.is_test_call && (
+                              <Badge variant="outline" className="ml-2 text-xs">
+                                Test
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <div>{log.client_name || log.client_phone}</div>
+                              {log.agent_assigned && (
+                                <div className="text-xs text-muted-foreground">
+                                  Agent: {log.agent_assigned}
+                                </div>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge {...getOutcomeBadge(log.outcome)}>
+                              {log.outcome.replace("_", " ")}
                             </Badge>
-                          )) : <span className="text-muted-foreground text-xs">-</span>}
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-              <div className="flex justify-between items-center mt-4 text-sm text-muted-foreground">
-                <div>
-                  Page {clientsPage} • {clientsTotal.toLocaleString()} total
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="outline"
-                    onClick={() => fetchClients(Math.max(1, clientsPage - 1))}
-                    disabled={clientsPage <= 1 || isLoadingClients}
-                  >
-                    Prev
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => fetchClients(clientsPage + 1)}
-                    disabled={clients.length === 0 || isLoadingClients}
-                  >
-                    Next
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
+                          </TableCell>
+                          <TableCell>{log.duration}</TableCell>
+                          <TableCell>
+                            <div className="text-sm">
+                              {log.total_attempts || 0}/6 attempts
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {Math.max(0, 6 - (log.total_attempts || 0))} left
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            {log.next_call_scheduled ? (
+                              <div className="text-sm">
+                                {new Date(
+                                  log.next_call_scheduled
+                                ).toLocaleDateString()}
+                              </div>
+                            ) : (
+                              <span className="text-muted-foreground text-sm">
+                                -
+                              </span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {new Date(log.started_at).toLocaleTimeString()}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No recent call activity found
+                  </div>
+                )}
+              </CardContent>
+            </Card>
 
-        {/* Live Activity Tab */}
-        <TabsContent value="live-activity" className="space-y-6">
-          {/* Live Calls Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <Activity className="h-5 w-5 mr-2" />
-                  Live Calls
-                </div>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={fetchActiveCalls}
-                  disabled={isLoadingActiveCalls}
-                >
-                  <RefreshCw
-                    className={`h-4 w-4 ${
-                      isLoadingActiveCalls ? "animate-spin" : ""
-                    }`}
+            {/* Clients Table (already built) */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Clients</CardTitle>
+                <CardDescription>
+                  All clients in the active campaign pool
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex gap-2 mb-4">
+                  <Input
+                    placeholder="Search name/phone/email"
+                    value={clientsSearch}
+                    onChange={(e) => setClientsSearch(e.target.value)}
                   />
-                  <span className="ml-2">Refresh</span>
-                </Button>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {activeCalls.length > 0 ? (
+                  <select
+                    className="border rounded-md px-2 py-1"
+                    value={clientsTypeFilter}
+                    onChange={(e) => setClientsTypeFilter(e.target.value)}
+                  >
+                    <option value="">All Types</option>
+                    <option value="medicare">Medicare</option>
+                    <option value="non_medicare">Non-Medicare</option>
+                  </select>
+                  <select
+                    className="border rounded-md px-2 py-1"
+                    value={clientsStatusFilter}
+                    onChange={(e) => setClientsStatusFilter(e.target.value)}
+                  >
+                    <option value="">All Status</option>
+                    <option value="pending">Pending</option>
+                    <option value="in_progress">In Progress</option>
+                    <option value="completed">Completed</option>
+                  </select>
+                  <select
+                    className="border rounded-md px-2 py-1"
+                    value={clientsTagFilter}
+                    onChange={(e) => setClientsTagFilter(e.target.value)}
+                  >
+                    <option value="">All Tags</option>
+                    <option value="LYZR-UC1-INTERESTED">Interested</option>
+                    <option value="LYZR-UC1-DNC-REQUESTED">DNC</option>
+                    <option value="LYZR-UC1-NOT-INTERESTED">
+                      Not Interested
+                    </option>
+                  </select>
+                  <Button
+                    variant="outline"
+                    onClick={() => fetchClients(1)}
+                    disabled={isLoadingClients}
+                  >
+                    Filter
+                  </Button>
+                </div>
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Call SID</TableHead>
-                      <TableHead>Method</TableHead>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Phone</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Agent</TableHead>
                       <TableHead>Type</TableHead>
-                      <TableHead>Client</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead>Turns</TableHead>
-                      <TableHead>Started</TableHead>
+                      <TableHead>Contact Type</TableHead>
+                      <TableHead>Attempts</TableHead>
+                      <TableHead>Last Contact</TableHead>
+                      <TableHead>Tags</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {activeCalls.map((c) => (
-                      <TableRow key={c.call_sid || c.started_at}>
-                        <TableCell className="font-mono text-xs">
-                          {c.call_sid ? `${c.call_sid.slice(0, 10)}...` : "—"}
-                        </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={
-                              c.outreach_method === "email"
-                                ? "secondary"
-                                : "outline"
-                            }
-                          >
-                            {c.outreach_method === "email" ? "Email" : "Call"}
-                          </Badge>
-                        </TableCell>
+                    {clients.map((c) => (
+                      <TableRow key={c.id}>
+                        <TableCell className="font-medium">{c.name}</TableCell>
+                        <TableCell>{c.phone}</TableCell>
+                        <TableCell>{c.email}</TableCell>
+                        <TableCell>{c.agent}</TableCell>
                         <TableCell>
                           <Badge
                             variant={
@@ -984,67 +1245,215 @@ export default function Dashboard() {
                                 : "secondary"
                             }
                           >
-                            {c.client_type || "-"}
+                            {c.client_type}
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <div>
-                            <div>{c.client_name || "Unknown"}</div>
-                            <div className="text-xs text-muted-foreground">
-                              {c.outreach_method === "email"
-                                ? c.client_email || ""
-                                : c.client_phone || ""}
-                            </div>
+                          <Badge variant="outline">{c.status}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              c.contact_type === "email"
+                                ? "secondary"
+                                : "outline"
+                            }
+                          >
+                            {c.contact_type === "email"
+                              ? "📧 Email"
+                              : "📞 Call"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{c.attempts}/6</TableCell>
+                        <TableCell>
+                          {c.last_contacted ? (
+                            new Date(c.last_contacted).toLocaleDateString()
+                          ) : (
+                            <span className="text-muted-foreground">Never</span>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex flex-wrap gap-1">
+                            {c.tags?.length > 0 ? (
+                              c.tags.map((tag, i) => (
+                                <Badge
+                                  key={i}
+                                  variant={
+                                    tag.includes("INTERESTED")
+                                      ? "default"
+                                      : tag.includes("DNC")
+                                      ? "destructive"
+                                      : "outline"
+                                  }
+                                  className="text-xs"
+                                >
+                                  {tag
+                                    .replace("LYZR-UC1-", "")
+                                    .replace(/_/g, " ")}
+                                </Badge>
+                              ))
+                            ) : (
+                              <span className="text-muted-foreground text-xs">
+                                -
+                              </span>
+                            )}
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">
-                            {c.status || c.call_status || "in_progress"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {c.turns || c.conversation_turns || 0}
-                        </TableCell>
-                        <TableCell>
-                          {c.started_at
-                            ? new Date(c.started_at).toLocaleTimeString()
-                            : "-"}
                         </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  No active calls
+                <div className="flex justify-between items-center mt-4 text-sm text-muted-foreground">
+                  <div>
+                    Page {clientsPage} • {clientsTotal.toLocaleString()} total
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => fetchClients(Math.max(1, clientsPage - 1))}
+                      disabled={clientsPage <= 1 || isLoadingClients}
+                    >
+                      Prev
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => fetchClients(clientsPage + 1)}
+                      disabled={clients.length === 0 || isLoadingClients}
+                    >
+                      Next
+                    </Button>
+                  </div>
                 </div>
-              )}
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          </TabsContent>
 
-          {/* Recent Activity Section */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <TrendingUp className="h-5 w-5 mr-2" />
-                Recent Call Activity
-              </CardTitle>
-              <CardDescription>
-                Latest completed calls and their outcomes
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="text-center py-8 text-muted-foreground">
-                Recent activity will be displayed here
-                <div className="text-xs mt-2">
-                  This section will show the latest call completions, outcomes,
-                  and trends
+          {/* Live Activity Tab */}
+          <TabsContent value="live-activity" className="space-y-6">
+            {/* Live Calls Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Activity className="h-5 w-5 mr-2" />
+                    Live Calls
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={fetchActiveCalls}
+                    disabled={isLoadingActiveCalls}
+                  >
+                    <RefreshCw
+                      className={`h-4 w-4 ${
+                        isLoadingActiveCalls ? "animate-spin" : ""
+                      }`}
+                    />
+                    <span className="ml-2">Refresh</span>
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {activeCalls.length > 0 ? (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Call SID</TableHead>
+                        <TableHead>Method</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Client</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Turns</TableHead>
+                        <TableHead>Started</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {activeCalls.map((c) => (
+                        <TableRow key={c.call_sid || c.started_at}>
+                          <TableCell className="font-mono text-xs">
+                            {c.call_sid ? `${c.call_sid.slice(0, 10)}...` : "—"}
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={
+                                c.outreach_method === "email"
+                                  ? "secondary"
+                                  : "outline"
+                              }
+                            >
+                              {c.outreach_method === "email" ? "Email" : "Call"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant={
+                                c.client_type === "medicare"
+                                  ? "default"
+                                  : "secondary"
+                              }
+                            >
+                              {c.client_type || "-"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <div>{c.client_name || "Unknown"}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {c.outreach_method === "email"
+                                  ? c.client_email || ""
+                                  : c.client_phone || ""}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline">
+                              {c.status || c.call_status || "in_progress"}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            {c.turns || c.conversation_turns || 0}
+                          </TableCell>
+                          <TableCell>
+                            {c.started_at
+                              ? new Date(c.started_at).toLocaleTimeString()
+                              : "-"}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No active calls
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Recent Activity Section */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <TrendingUp className="h-5 w-5 mr-2" />
+                  Recent Call Activity
+                </CardTitle>
+                <CardDescription>
+                  Latest completed calls and their outcomes
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8 text-muted-foreground">
+                  Recent activity will be displayed here
+                  <div className="text-xs mt-2">
+                    This section will show the latest call completions,
+                    outcomes, and trends
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </TooltipProvider>
   );
 }

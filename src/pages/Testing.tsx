@@ -254,7 +254,7 @@ export default function Testing() {
             attempts_left: Math.max(
               0,
               6 - ((client.total_attempts as number) || 0)
-            ), // Max 6 attempts
+            ), // TODO: Use config value instead of hardcoded 6
           })
         );
         setTestClients(clientsWithAttempts);
