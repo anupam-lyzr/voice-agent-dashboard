@@ -416,8 +416,9 @@ export default function Dashboard() {
           onValueChange={setActiveTab}
           className="mt-6 space-y-6"
         >
-          <TabsList className="grid grid-cols-2 w-full">
+          <TabsList className="grid grid-cols-3 w-full">
             <TabsTrigger value="analytics">Analytics</TabsTrigger>
+            <TabsTrigger value="call-history">Call History</TabsTrigger>
             <TabsTrigger value="live-activity">Live Activity</TabsTrigger>
           </TabsList>
 
@@ -1431,7 +1432,7 @@ export default function Dashboard() {
             </Card>
 
             {/* Recent Activity Section */}
-            <Card>
+            {/* <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
                   <TrendingUp className="h-5 w-5 mr-2" />
@@ -1447,6 +1448,31 @@ export default function Dashboard() {
                   <div className="text-xs mt-2">
                     This section will show the latest call completions,
                     outcomes, and trends
+                  </div>
+                </div>
+              </CardContent>
+            </Card> */}
+          </TabsContent>
+
+          {/* Call History Tab */}
+          <TabsContent value="call-history" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Activity className="h-5 w-5 mr-2" />
+                  Call History
+                </CardTitle>
+                <CardDescription>
+                  Complete history of all calls with pagination and filters
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center py-8 text-muted-foreground">
+                  Call History with pagination and filters will be displayed
+                  here
+                  <div className="text-xs mt-2">
+                    This will show all calls from the database with filtering
+                    options
                   </div>
                 </div>
               </CardContent>
