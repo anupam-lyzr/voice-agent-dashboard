@@ -310,7 +310,7 @@ const Clients = () => {
           </Table>
           <div className="flex justify-between items-center mt-4 text-sm text-muted-foreground">
             <div>
-              Page {clientsPage} • {clientsTotal.toLocaleString()} total
+              Page {clientsPage} • {(clientsTotal || 0).toLocaleString()} total
             </div>
             <div className="flex gap-2">
               <Button

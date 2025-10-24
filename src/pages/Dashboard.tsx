@@ -442,10 +442,10 @@ export default function Dashboard() {
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
-                      {stats.total_clients.toLocaleString()}
+                      {(stats.total_clients ?? 0).toLocaleString()}
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {stats.pending_clients.toLocaleString()} pending
+                      {(stats.pending_clients ?? 0).toLocaleString()} pending
                     </p>
                   </CardContent>
                 </Card>
@@ -468,12 +468,15 @@ export default function Dashboard() {
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
-                      {stats.completed_calls.toLocaleString()}
+                      {(stats.completed_calls ?? 0).toLocaleString()}
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {stats.completion_rate.toFixed(1)}% completion rate
+                      {(stats.completion_rate ?? 0).toFixed(1)}% completion rate
                     </p>
-                    <Progress value={stats.completion_rate} className="mt-2" />
+                    <Progress
+                      value={stats.completion_rate ?? 0}
+                      className="mt-2"
+                    />
                   </CardContent>
                 </Card>
                 <Card>
@@ -485,12 +488,15 @@ export default function Dashboard() {
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold text-green-600">
-                      {stats.interested_clients.toLocaleString()}
+                      {(stats.interested_clients ?? 0).toLocaleString()}
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {stats.interest_rate.toFixed(1)}% interest rate
+                      {(stats.interest_rate ?? 0).toFixed(1)}% interest rate
                     </p>
-                    <Progress value={stats.interest_rate} className="mt-2" />
+                    <Progress
+                      value={stats.interest_rate ?? 0}
+                      className="mt-2"
+                    />
                   </CardContent>
                 </Card>
                 <Card>
@@ -502,7 +508,7 @@ export default function Dashboard() {
                   </CardHeader>
                   <CardContent>
                     <div className="text-2xl font-bold">
-                      {stats.not_interested_clients.toLocaleString()}
+                      {(stats.not_interested_clients ?? 0).toLocaleString()}
                     </div>
                     <p className="text-xs text-muted-foreground">
                       Campaign responses
@@ -595,7 +601,9 @@ export default function Dashboard() {
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold">
-                        {stats.call_status_breakdown?.total_calls_made.toLocaleString()}
+                        {(
+                          stats.call_status_breakdown?.total_calls_made ?? 0
+                        ).toLocaleString()}
                       </div>
                     </CardContent>
                   </Card>
@@ -618,7 +626,9 @@ export default function Dashboard() {
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold text-green-600">
-                        {stats.call_status_breakdown?.calls_answered.toLocaleString()}
+                        {(
+                          stats.call_status_breakdown?.calls_answered ?? 0
+                        ).toLocaleString()}
                       </div>
                     </CardContent>
                   </Card>
@@ -642,7 +652,9 @@ export default function Dashboard() {
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold text-blue-600">
-                        {stats.call_status_breakdown?.voicemail.toLocaleString()}
+                        {(
+                          stats.call_status_breakdown?.voicemail ?? 0
+                        ).toLocaleString()}
                       </div>
                     </CardContent>
                   </Card>
@@ -663,7 +675,9 @@ export default function Dashboard() {
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold text-orange-600">
-                        {stats.call_status_breakdown?.busy.toLocaleString()}
+                        {(
+                          stats.call_status_breakdown?.busy ?? 0
+                        ).toLocaleString()}
                       </div>
                     </CardContent>
                   </Card>
@@ -684,7 +698,9 @@ export default function Dashboard() {
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold text-red-600">
-                        {stats.call_status_breakdown?.failed.toLocaleString()}
+                        {(
+                          stats.call_status_breakdown?.failed ?? 0
+                        ).toLocaleString()}
                       </div>
                     </CardContent>
                   </Card>
@@ -705,7 +721,9 @@ export default function Dashboard() {
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold text-gray-600">
-                        {stats.call_status_breakdown?.no_contact.toLocaleString()}
+                        {(
+                          stats.call_status_breakdown?.no_contact ?? 0
+                        ).toLocaleString()}
                       </div>
                     </CardContent>
                   </Card>
@@ -739,7 +757,10 @@ export default function Dashboard() {
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold text-green-600">
-                        {stats.conversation_outcomes_breakdown?.interested_yes_no.toLocaleString()}
+                        {(
+                          stats.conversation_outcomes_breakdown
+                            ?.interested_yes_no ?? 0
+                        ).toLocaleString()}
                       </div>
                     </CardContent>
                   </Card>
@@ -762,7 +783,10 @@ export default function Dashboard() {
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold text-blue-600">
-                        {stats.conversation_outcomes_breakdown?.schedule_invite_yes_yes.toLocaleString()}
+                        {(
+                          stats.conversation_outcomes_breakdown
+                            ?.schedule_invite_yes_yes ?? 0
+                        ).toLocaleString()}
                       </div>
                     </CardContent>
                   </Card>
@@ -783,7 +807,10 @@ export default function Dashboard() {
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold text-red-600">
-                        {stats.conversation_outcomes_breakdown?.not_interested_no.toLocaleString()}
+                        {(
+                          stats.conversation_outcomes_breakdown
+                            ?.not_interested_no ?? 0
+                        ).toLocaleString()}
                       </div>
                     </CardContent>
                   </Card>
@@ -807,7 +834,10 @@ export default function Dashboard() {
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold text-red-600">
-                        {stats.conversation_outcomes_breakdown?.dnc_requested_no_no.toLocaleString()}
+                        {(
+                          stats.conversation_outcomes_breakdown
+                            ?.dnc_requested_no_no ?? 0
+                        ).toLocaleString()}
                       </div>
                     </CardContent>
                   </Card>
@@ -831,7 +861,10 @@ export default function Dashboard() {
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold text-yellow-600">
-                        {stats.conversation_outcomes_breakdown?.keep_communications_no_yes.toLocaleString()}
+                        {(
+                          stats.conversation_outcomes_breakdown
+                            ?.keep_communications_no_yes ?? 0
+                        ).toLocaleString()}
                       </div>
                     </CardContent>
                   </Card>
@@ -854,7 +887,9 @@ export default function Dashboard() {
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold text-gray-600">
-                        {stats.conversation_outcomes_breakdown?.no_outcome.toLocaleString()}
+                        {(
+                          stats.conversation_outcomes_breakdown?.no_outcome ?? 0
+                        ).toLocaleString()}
                       </div>
                     </CardContent>
                   </Card>
@@ -1306,7 +1341,8 @@ export default function Dashboard() {
                 </Table>
                 <div className="flex justify-between items-center mt-4 text-sm text-muted-foreground">
                   <div>
-                    Page {clientsPage} • {clientsTotal.toLocaleString()} total
+                    Page {clientsPage} • {(clientsTotal || 0).toLocaleString()}{" "}
+                    total
                   </div>
                   <div className="flex gap-2">
                     <Button
